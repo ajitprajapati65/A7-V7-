@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watermark Images Online - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            overflow: hidden;
+        }
+        #result-canvas {
+            max-width: 100%;
+            max-height: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .modern-input, .color-picker {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 1rem;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        .color-picker {
+            padding: 2px 5px;
+            height: 45px;
+            cursor: pointer;
+        }
+        
+        /* Custom Tabs for Text vs Logo */
+        .tab-container {
+            display: flex;
+            background: var(--border-color);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px 0;
+            text-align: center;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            color: var(--text-main);
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .checkbox-container input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../index.html#basic-editing">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Watermark Images</h1>
+            <p>Protect your photos. Add custom text, logos, or full-image repeating tile patterns easily.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">©️</div>
+                    <h3>Upload Image to Watermark</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="result-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="tab-container">
+                        <button class="tab-btn active" id="tab-text">Text Watermark</button>
+                        <button class="tab-btn" id="tab-logo">Logo Watermark</button>
+                    </div>
+
+                    <div id="text-controls">
+                        <input type="text" id="watermark-text" class="modern-input" value="© A7 V7" placeholder="Enter Watermark Text">
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex: 1;">
+                                <label style="color: var(--text-main); font-size: 0.9em;">Text Color</label>
+                                <input type="color" id="text-color" class="color-picker" value="#ffffff">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="logo-controls" style="display: none;">
+                        <input type="file" id="logo-input" accept="image/png, image/jpeg" hidden>
+                        <button class="secondary-btn" id="logo-browse-btn" style="width: 100%; margin-bottom: 15px;">📁 Select Logo Image</button>
+                        <small id="logo-status" style="color: #10b981; display: none;">✅ Logo loaded</small>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                    <div class="control-group">
+                        <div class="slider-header"><label>Size</label></div>
+                        <input type="range" min="10" max="200" value="50" class="modern-slider" id="size-slider">
+                        
+                        <div class="slider-header" style="margin-top: 15px;"><label>Opacity (Transparency)</label></div>
+                        <input type="range" min="0.1" max="1" step="0.1" value="0.5" class="modern-slider" id="opacity-slider">
+                        
+                        <div class="slider-header" style="margin-top: 15px;"><label>Rotation Angle</label></div>
+                        <input type="range" min="-90" max="90" value="-30" class="modern-slider" id="rotation-slider">
+                    </div>
+
+                    <div class="control-group" style="margin-top: 20px;">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="tile-checkbox">
+                            Repeat/Tile Watermark (Full Image Cover)
+                        </label>
+                        
+                        <div id="position-sliders" style="margin-top: 15px;">
+                            <div class="slider-header"><label>Move X</label></div>
+                            <input type="range" min="0" max="100" value="50" class="modern-slider" id="pos-x-slider">
+                            
+                            <div class="slider-header" style="margin-top: 10px;"><label>Move Y</label></div>
+                            <input type="range" min="0" max="100" value="50" class="modern-slider" id="pos-y-slider">
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981;">⬇️ Download Protected Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload a base image first.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Watermark Your Images?</h2>
+            <ul>
+                <li><strong>Copyright Protection:</strong> Prevent unauthorized use and theft of your original photos and artworks.</li>
+                <li><strong>Brand Awareness:</strong> Add your company logo or website URL so people know who created the content when it gets shared.</li>
+                <li><strong>Repeating Tile Pattern:</strong> The best way to protect images. Our "Repeat" feature covers the entire photo, making it impossible for someone to simply crop the watermark out.</li>
+                <li><strong>100% Private:</strong> Your photos are processed entirely within your web browser. No uploads to servers mean your original, un-watermarked files stay completely safe.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Dark Mode Logic
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('result-canvas');
+        const ctx = canvas.getContext('2d');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // Tabs
+        const tabText = document.getElementById('tab-text');
+        const tabLogo = document.getElementById('tab-logo');
+        const textControls = document.getElementById('text-controls');
+        const logoControls = document.getElementById('logo-controls');
+
+        // Controls
+        const textInput = document.getElementById('watermark-text');
+        const colorInput = document.getElementById('text-color');
+        const logoInput = document.getElementById('logo-input');
+        const logoBrowseBtn = document.getElementById('logo-browse-btn');
+        const logoStatus = document.getElementById('logo-status');
+        
+        const sizeSlider = document.getElementById('size-slider');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const rotationSlider = document.getElementById('rotation-slider');
+        const tileCheckbox = document.getElementById('tile-checkbox');
+        const posXSlider = document.getElementById('pos-x-slider');
+        const posYSlider = document.getElementById('pos-y-slider');
+        const posSlidersDiv = document.getElementById('position-sliders');
+
+        // State variables
+        let currentImg = null;
+        let logoImg = null;
+        let wmMode = 'text'; // 'text' or 'logo'
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        canvas.width = currentImg.width;
+                        canvas.height = currentImg.height;
+                        dropContent.style.display = 'none';
+                        statusBox.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        editingTools.style.display = 'block';
+                        updateCanvas();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 2. Tab Switching Logic
+        tabText.addEventListener('click', () => {
+            wmMode = 'text';
+            tabText.classList.add('active');
+            tabLogo.classList.remove('active');
+            textControls.style.display = 'block';
+            logoControls.style.display = 'none';
+            updateCanvas();
+        });
+
+        tabLogo.addEventListener('click', () => {
+            wmMode = 'logo';
+            tabLogo.classList.add('active');
+            tabText.classList.remove('active');
+            logoControls.style.display = 'block';
+            textControls.style.display = 'none';
+            updateCanvas();
+        });
+
+        // 3. Upload Logo Image
+        logoBrowseBtn.addEventListener('click', () => logoInput.click());
+        logoInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    logoImg = new Image();
+                    logoImg.onload = () => {
+                        logoStatus.style.display = 'block';
+                        updateCanvas();
+                    };
+                    logoImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 4. Listeners for live update
+        [textInput, colorInput, sizeSlider, opacitySlider, rotationSlider, posXSlider, posYSlider].forEach(el => {
+            el.addEventListener('input', updateCanvas);
+        });
+
+        tileCheckbox.addEventListener('change', (e) => {
+            // Hide position sliders if Tiled is ON
+            posSlidersDiv.style.opacity = e.target.checked ? '0.3' : '1';
+            posSlidersDiv.style.pointerEvents = e.target.checked ? 'none' : 'auto';
+            updateCanvas();
+        });
+
+        // 5. Core Drawing Logic
+        function updateCanvas() {
+            if (!currentImg) return;
+
+            // Clear & Draw Base Image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1.0;
+            ctx.drawImage(currentImg, 0, 0);
+
+            // Fetch Settings
+            const text = textInput.value || "Watermark";
+            const color = colorInput.value;
+            const size = parseInt(sizeSlider.value) * (canvas.width / 1000); // Scale relative to image
+            const opacity = parseFloat(opacitySlider.value);
+            const rotation = parseInt(rotationSlider.value) * Math.PI / 180;
+            const isTiled = tileCheckbox.checked;
+            
+            ctx.globalAlpha = opacity;
+
+            if (wmMode === 'text') {
+                ctx.fillStyle = color;
+                ctx.font = `bold ${size}px Arial`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                if (isTiled) {
+                    drawTiled(ctx, canvas, (x, y) => {
+                        ctx.fillText(text, 0, 0); // Drawn at 0,0 because we translate in drawTiled
+                    }, rotation, size * 4, size * 2); // spacing X and Y
+                } else {
+                    const x = (canvas.width * posXSlider.value) / 100;
+                    const y = (canvas.height * posYSlider.value) / 100;
+                    drawSingle(ctx, x, y, rotation, () => ctx.fillText(text, 0, 0));
+                }
+            } 
+            else if (wmMode === 'logo' && logoImg) {
+                // Calculate logo scale based on size slider
+                const logoScale = size / 100; 
+                const logoW = logoImg.width * logoScale;
+                const logoH = logoImg.height * logoScale;
+
+                if (isTiled) {
+                    drawTiled(ctx, canvas, () => {
+                        ctx.drawImage(logoImg, -logoW/2, -logoH/2, logoW, logoH);
+                    }, rotation, logoW * 2, logoH * 2);
+                } else {
+                    const x = (canvas.width * posXSlider.value) / 100;
+                    const y = (canvas.height * posYSlider.value) / 100;
+                    drawSingle(ctx, x, y, rotation, () => ctx.drawImage(logoImg, -logoW/2, -logoH/2, logoW, logoH));
+                }
+            }
+            
+            ctx.globalAlpha = 1.0; // Reset
+        }
+
+        // Helper: Draw Single Watermark
+        function drawSingle(context, x, y, angle, drawFn) {
+            context.save();
+            context.translate(x, y);
+            context.rotate(angle);
+            drawFn();
+            context.restore();
+        }
+
+        // Helper: Draw Tiled Pattern
+        function drawTiled(context, cvs, drawFn, angle, stepX, stepY) {
+            // Prevent infinite loops if size is too small
+            stepX = Math.max(stepX, 50); 
+            stepY = Math.max(stepY, 50);
+
+            context.save();
+            // Start tiling outside canvas bounds so rotation doesn't leave empty edges
+            const diagonal = Math.sqrt(cvs.width**2 + cvs.height**2);
+            for (let x = -diagonal/2; x < diagonal*1.5; x += stepX) {
+                for (let y = -diagonal/2; y < diagonal*1.5; y += stepY) {
+                    context.save();
+                    context.translate(x, y);
+                    context.rotate(angle);
+                    drawFn();
+                    context.restore();
+                }
+            }
+            context.restore();
+        }
+
+        // 6. Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `A7-V7-Watermarked.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+    </script>
+</body>
+</html>

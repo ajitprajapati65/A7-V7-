@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop PNG & Preserve Transparency - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        .canvas-wrapper {
+            padding: 0; /* Remove padding for cropper to fit well */
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            height: 500px; /* Fixed height for editing area */
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Container for the image to be cropped */
+        .img-container {
+            width: 100%;
+            height: 100%;
+            /* Transparent Checkered Background */
+            background-image: 
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        [data-theme="dark"] .img-container {
+            background-image: 
+                linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        /* Ensures the image doesn't overflow before cropper loads */
+        img#image-to-crop {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* Action Grids */
+        .ratio-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tool-btn-small {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .tool-btn-small:hover {
+            background: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .tool-btn-small.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .dimension-display {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            font-family: monospace;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../index.html#basic-editing">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Crop PNG (Preserve Transparency)</h1>
+            <p>Freely adjust, resize, and crop your PNG images without losing their transparent background.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/png, image/jpeg, image/webp" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">📐</div>
+                    <h3>Upload Image to Crop</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">*PNG format is recommended for transparent backgrounds.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <div class="img-container">
+                        <img id="image-to-crop" src="" alt="Picture">
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="dimension-display">
+                        <span>Output Size:</span>
+                        <strong><span id="crop-width">0</span> x <span id="crop-height">0</span> px</strong>
+                    </div>
+
+                    <h3 style="color: var(--text-main); margin-bottom: 10px;">Aspect Ratio (Shape)</h3>
+                    <div class="ratio-grid">
+                        <button class="tool-btn-small active" data-ratio="NaN">🆓 Free</button>
+                        <button class="tool-btn-small" data-ratio="1">⬛ 1:1</button>
+                        <button class="tool-btn-small" data-ratio="1.7777777777777777">📺 16:9</button>
+                        <button class="tool-btn-small" data-ratio="0.75">📱 3:4</button>
+                    </div>
+
+                    <h3 style="color: var(--text-main); margin-top: 20px; margin-bottom: 10px;">Adjustments</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;">
+                        <button class="tool-btn-small" id="btn-zoom-in">🔍 Zoom In</button>
+                        <button class="tool-btn-small" id="btn-zoom-out">🔎 Zoom Out</button>
+                        <button class="tool-btn-small" id="btn-rotate-left">↺ Rotate L</button>
+                        <button class="tool-btn-small" id="btn-rotate-right">↻ Rotate R</button>
+                        <button class="tool-btn-small" id="btn-reset" style="grid-column: span 2; border-color: #ef4444; color: #ef4444;">↺ Reset All Adjustments</button>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: auto;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981; width: 100%;">⬇️ Download Cropped PNG</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%; margin-top: 10px;">+ Try New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image to start cropping.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Use Our Transparent Cropper?</h2>
+            <ul>
+                <li><strong>True PNG Support:</strong> Most basic editors fill empty cropped spaces with a white or black background. Our tool ensures your PNGs stay 100% transparent.</li>
+                <li><strong>Pro-Level Adjustments:</strong> Don't just crop! Use your mouse wheel to zoom in and out, drag the image around the canvas, and use the smart corner handles for precision cutting.</li>
+                <li><strong>Smart Aspect Ratios:</strong> Need a perfect square for Instagram or a 16:9 rectangle for YouTube? Use our 1-click preset buttons to lock the cropping shape.</li>
+                <li><strong>Live Dimensions:</strong> See exactly how many pixels wide and tall your final cropped image will be in real-time.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Logic
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+
+        // UI Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        // Control Elements
+        const ratioBtns = document.querySelectorAll('.ratio-grid .tool-btn-small');
+        const cropWidth = document.getElementById('crop-width');
+        const cropHeight = document.getElementById('crop-height');
+        const downloadBtn = document.getElementById('download-btn');
+
+        let cropper = null; // Holds the Cropper.js instance
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // Set image source
+                    imageToCrop.src = e.target.result;
+                    
+                    // Display Setup
+                    dropContent.style.display = 'none';
+                    statusBox.style.display = 'none';
+                    canvasContainer.style.display = 'block';
+                    editingTools.style.display = 'block';
+                    
+                    // Initialize Cropper
+                    initCropper();
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 2. Initialize Premium Cropper
+        function initCropper() {
+            // Destroy existing cropper if user uploads a new image without reloading
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: NaN, // Free crop by default
+                viewMode: 1, // Restrict crop box to not exceed canvas
+                dragMode: 'move', // Allow moving image around
+                background: false, // Turn off default gray background to show our checkered CSS
+                responsive: true,
+                autoCropArea: 0.8, // Take up 80% of canvas initially
+                
+                // Live update of dimensions when user adjusts the crop box
+                crop(event) {
+                    cropWidth.innerText = Math.round(event.detail.width);
+                    cropHeight.innerText = Math.round(event.detail.height);
+                },
+            });
+        }
+
+        // 3. Aspect Ratio Buttons Logic
+        ratioBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(!cropper) return;
+                
+                // Update UI active state
+                ratioBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Get ratio and apply to cropper
+                const ratio = parseFloat(btn.getAttribute('data-ratio'));
+                cropper.setAspectRatio(ratio);
+            });
+        });
+
+        // 4. Adjustment Buttons Logic
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            if(cropper) cropper.zoom(0.1);
+        });
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            if(cropper) cropper.zoom(-0.1);
+        });
+        document.getElementById('btn-rotate-left').addEventListener('click', () => {
+            if(cropper) cropper.rotate(-45);
+        });
+        document.getElementById('btn-rotate-right').addEventListener('click', () => {
+            if(cropper) cropper.rotate(45);
+        });
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            if(cropper) cropper.reset();
+        });
+
+        // 5. Download Logic (Export as PNG to preserve transparency)
+        downloadBtn.addEventListener('click', () => {
+            if (!cropper) return;
+
+            // Get the cropped canvas
+            // We don't set a fill color, so empty space remains transparent!
+            const croppedCanvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            if (!croppedCanvas) {
+                alert("Could not crop image. Please try again.");
+                return;
+            }
+
+            // Download as PNG
+            const link = document.createElement('a');
+            link.download = `A7-V7-Cropped-${Date.now()}.png`;
+            link.href = croppedCanvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

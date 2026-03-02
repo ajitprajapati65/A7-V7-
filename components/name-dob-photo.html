@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Name & DOB on Photo - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        /* Modern Input Fields Styling */
+        .modern-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 1rem;
+            margin-bottom: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .modern-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+        }
+        #result-canvas {
+            background-color: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc; /* Standard photo border */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../index.html#basic-editing">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Add Name & Date on Photo</h1>
+            <p>Perfect for SSC, UPSC, and other official forms. Adjust photo, add text, and download instantly.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">📸</div>
+                    <h3>Upload Passport Photo</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="result-canvas" width="400" height="500"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                <div class="control-group">
+                    <h3 style="color: var(--text-main); margin-bottom: 15px;">1. Enter Details</h3>
+                    <input type="text" id="name-input" class="modern-input" placeholder="Enter Full Name (e.g., RAHUL KUMAR)" disabled>
+                    <input type="text" id="dob-input" class="modern-input" placeholder="Enter Date (e.g., D.O.P: 15/08/2026)" disabled>
+                </div>
+
+                <div class="control-group" id="adjustment-tools" style="display: none; margin-top: 10px;">
+                    <h3 style="color: var(--text-main); margin-bottom: 15px;">2. Adjust Photo</h3>
+                    
+                    <div class="slider-header"><label>Zoom (Scale)</label></div>
+                    <input type="range" min="0.1" max="3" step="0.05" value="1" class="modern-slider" id="scale-slider">
+                    
+                    <div class="slider-header" style="margin-top: 10px;"><label>Move Left/Right (X)</label></div>
+                    <input type="range" min="-300" max="300" value="0" class="modern-slider" id="x-slider">
+                    
+                    <div class="slider-header" style="margin-top: 10px;"><label>Move Up/Down (Y)</label></div>
+                    <input type="range" min="-300" max="300" value="0" class="modern-slider" id="y-slider">
+                </div>
+
+                <div class="action-buttons" style="margin-top: auto;">
+                    <button class="primary-btn" id="download-btn" style="display: none; background: #10b981;">⬇️ Download Photo</button>
+                    <button class="secondary-btn" onclick="location.reload()">+ Try New Image</button>
+                </div>
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>How to create perfectly formatted ID Photos?</h2>
+            <ol>
+                <li><strong>Upload Photo:</strong> Select a clear, front-facing passport-size photo.</li>
+                <li><strong>Enter Details:</strong> Type your Name and Date of Photo/Birth in the input boxes.</li>
+                <li><strong>Adjust & Align:</strong> Use the Zoom and Move sliders to fit your face perfectly in the frame without overlapping the text area.</li>
+                <li><strong>Download:</strong> Get your high-quality, ready-to-upload JPEG file instantly!</li>
+            </ol>
+            <p>Your photo is processed locally on your device ensuring 100% privacy.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('result-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const nameInput = document.getElementById('name-input');
+        const dobInput = document.getElementById('dob-input');
+        const scaleSlider = document.getElementById('scale-slider');
+        const xSlider = document.getElementById('x-slider');
+        const ySlider = document.getElementById('y-slider');
+        const adjustmentTools = document.getElementById('adjustment-tools');
+        const downloadBtn = document.getElementById('download-btn');
+
+        let currentImg = null;
+        
+        // Initial Image setup parameters
+        let imgScale = 1;
+        let imgX = 0;
+        let imgY = 0;
+
+        // File Upload
+        browseBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0 && this.files[0].type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        // Calculate initial scale to cover width
+                        imgScale = canvas.width / currentImg.width;
+                        scaleSlider.value = imgScale;
+                        
+                        // Show UI tools
+                        dropContent.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        adjustmentTools.style.display = 'block';
+                        downloadBtn.style.display = 'block';
+                        nameInput.disabled = false;
+                        dobInput.disabled = false;
+                        
+                        updateCanvas();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // Event Listeners for live update
+        nameInput.addEventListener('input', updateCanvas);
+        dobInput.addEventListener('input', updateCanvas);
+        
+        scaleSlider.addEventListener('input', (e) => { imgScale = parseFloat(e.target.value); updateCanvas(); });
+        xSlider.addEventListener('input', (e) => { imgX = parseInt(e.target.value); updateCanvas(); });
+        ySlider.addEventListener('input', (e) => { imgY = parseInt(e.target.value); updateCanvas(); });
+
+        // Core Drawing Logic
+        function updateCanvas() {
+            if (!currentImg) return;
+
+            // 1. Clear Canvas with White Background
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Draw Uploaded Photo (with adjustments)
+            const w = currentImg.width * imgScale;
+            const h = currentImg.height * imgScale;
+            // Center the image initially, then apply X/Y offsets
+            const drawX = (canvas.width - w) / 2 + imgX;
+            const drawY = imgY; 
+            
+            ctx.drawImage(currentImg, drawX, drawY, w, h);
+
+            // 3. Draw Bottom White Slate for Text (Height = 100px)
+            const slateHeight = 100;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, canvas.height - slateHeight, canvas.width, slateHeight);
+            
+            // Add a thin black line above the text area to separate photo and text
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, canvas.height - slateHeight, canvas.width, 3);
+
+            // 4. Draw Text (Name & DOB)
+            ctx.fillStyle = "#000000"; // Black Text
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // Draw Name
+            ctx.font = "bold 28px Arial";
+            const nameText = nameInput.value.trim() !== "" ? nameInput.value.toUpperCase() : "YOUR NAME";
+            ctx.fillText(nameText, canvas.width / 2, canvas.height - 65);
+
+            // Draw DOB
+            ctx.font = "bold 22px Arial";
+            const dobText = dobInput.value.trim() !== "" ? dobInput.value : "D.O.P: DD/MM/YYYY";
+            ctx.fillText(dobText, canvas.width / 2, canvas.height - 25);
+            
+            // 5. Draw Border around the whole canvas (For cut-out)
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `A7-V7-Formatted-Photo.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 1.0); // Highest quality JPEG
+            link.click();
+        });
+    </script>
+</body>
+</html>

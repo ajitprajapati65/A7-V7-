@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Color Picker & Palette Generator - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <style>
+        .canvas-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            cursor: crosshair;
+        }
+
+        #image-canvas {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 4px;
+        }
+
+        /* The Magnifier Lens */
+        #loupe {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 4px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3);
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+            background-color: transparent;
+            image-rendering: pixelated;
+        }
+        /* Crosshair inside loupe */
+        #loupe::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 10px; height: 10px;
+            border: 1px solid rgba(255,255,255,0.8);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+
+        /* Color Display Box */
+        .color-display-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        [data-theme="dark"] .color-display-box { background: rgba(255,255,255,0.03); }
+
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            transition: background-color 0.1s;
+        }
+
+        /* Code Inputs */
+        .code-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .code-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .copy-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: var(--hover-color); }
+
+        /* Palette & History Swatches */
+        .palette-grid, .history-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .mini-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .mini-swatch:hover {
+            transform: scale(1.15);
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        #toast.show {
+            opacity: 1;
+            visibility: visible;
+            bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../index.html#basic-editing">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Image Color Picker</h1>
+            <p>Hover to magnify, click to pick, and auto-extract the dominant color palette from any image.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🎨</div>
+                    <h3>Upload Image to Pick Colors</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="image-canvas"></canvas>
+                    <canvas id="loupe" width="100" height="100"></canvas>
+                    <img id="hidden-img" style="display:none;" crossorigin="anonymous">
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <h3 style="color: var(--text-main); margin-bottom: 10px;">Selected Color</h3>
+                    
+                    <div class="color-display-box">
+                        <div class="color-swatch" id="main-swatch"></div>
+                        <div style="flex: 1;">
+                            <div style="color: var(--text-light); font-size: 0.85rem; margin-bottom: 4px;">Live Preview</div>
+                            <div style="color: var(--text-main); font-weight: bold; font-size: 1.2rem;" id="color-name">#FFFFFF</div>
+                        </div>
+                    </div>
+
+                    <div class="code-row">
+                        <span style="color: var(--text-main); font-weight: 600; width: 40px;">HEX</span>
+                        <input type="text" id="hex-input" class="code-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('hex-input')">Copy</button>
+                    </div>
+                    <div class="code-row">
+                        <span style="color: var(--text-main); font-weight: 600; width: 40px;">RGB</span>
+                        <input type="text" id="rgb-input" class="code-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('rgb-input')">Copy</button>
+                    </div>
+                    <div class="code-row">
+                        <span style="color: var(--text-main); font-weight: 600; width: 40px;">HSL</span>
+                        <input type="text" id="hsl-input" class="code-input" readonly>
+                        <button class="copy-btn" onclick="copyToClipboard('hsl-input')">Copy</button>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 25px 0;">
+
+                    <h3 style="color: var(--text-main); margin-bottom: 5px;">Auto Color Palette ✨</h3>
+                    <small style="color: var(--text-light);">Dominant colors extracted by AI.</small>
+                    <div class="palette-grid" id="palette-container">
+                        </div>
+
+                    <h3 style="color: var(--text-main); margin-top: 25px; margin-bottom: 5px;">Picked History</h3>
+                    <small style="color: var(--text-light);">Colors you clicked on.</small>
+                    <div class="history-grid" id="history-container">
+                        </div>
+
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%;">+ Upload New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image first.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>The Ultimate Color Tool</h2>
+            <ul>
+                <li><strong>Precision Pixel Loupe:</strong> Hover over your image to see a magnified view. It helps you pinpoint and extract the exact shade you want from tiny details.</li>
+                <li><strong>AI Palette Extraction:</strong> As soon as you upload an image, our tool analyzes it and instantly generates a harmonious color palette containing the top 6 dominant colors.</li>
+                <li><strong>All Color Formats:</strong> Get your color in HEX, RGB, or HSL formats instantly. Just click the "Copy" button to use it in your CSS or design software.</li>
+                <li><strong>Color History:</strong> Every time you click to pick a color, we save it in your history strip so you never lose a great shade.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast">Copied to clipboard! 📋</div>
+
+    <script>
+        // Theme Logic
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const imgCanvas = document.getElementById('image-canvas');
+        const ctx = imgCanvas.getContext('2d', { willReadFrequently: true });
+        const hiddenImg = document.getElementById('hidden-img');
+        
+        // Loupe Elements
+        const loupeCanvas = document.getElementById('loupe');
+        const loupeCtx = loupeCanvas.getContext('2d');
+        
+        // UI Controls
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const mainSwatch = document.getElementById('main-swatch');
+        const colorName = document.getElementById('color-name');
+        const hexInput = document.getElementById('hex-input');
+        const rgbInput = document.getElementById('rgb-input');
+        const hslInput = document.getElementById('hsl-input');
+        const paletteContainer = document.getElementById('palette-container');
+        const historyContainer = document.getElementById('history-container');
+        const toast = document.getElementById('toast');
+
+        // State Variables
+        let currentImg = null;
+        let isHovering = false;
+        let currentHex = '#FFFFFF';
+        let historyColors = new Set(); // Prevent duplicates in history
+
+        // Initialize Color Thief
+        const colorThief = new ColorThief();
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    hiddenImg.src = e.target.result; // For ColorThief
+                    
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        setupCanvas();
+                        generateAutoPalette();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        function setupCanvas() {
+            dropContent.style.display = 'none';
+            statusBox.style.display = 'none';
+            canvasContainer.style.display = 'flex';
+            editingTools.style.display = 'block';
+
+            // Set actual internal dimensions
+            imgCanvas.width = currentImg.width;
+            imgCanvas.height = currentImg.height;
+
+            // Draw Original Image
+            ctx.drawImage(currentImg, 0, 0);
+        }
+
+        // 2. The Magnifier (Loupe) & Hover Logic
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Scale mouse coordinates to match internal canvas resolution
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (evt.clientX - rect.left) * scaleX,
+                y: (evt.clientY - rect.top) * scaleY,
+                cssX: evt.clientX - rect.left,
+                cssY: evt.clientY - rect.top
+            };
+        }
+
+        imgCanvas.addEventListener('mouseenter', () => {
+            loupeCanvas.style.display = 'block';
+            isHovering = true;
+        });
+
+        imgCanvas.addEventListener('mouseleave', () => {
+            loupeCanvas.style.display = 'none';
+            isHovering = false;
+        });
+
+        imgCanvas.addEventListener('mousemove', (e) => {
+            if (!isHovering) return;
+            const pos = getMousePos(imgCanvas, e);
+
+            // Move the Loupe element (Positioning it via CSS relative to the wrapper)
+            // Offset it so it doesn't sit exactly under the mouse
+            loupeCanvas.style.left = `${pos.cssX - 50}px`;
+            loupeCanvas.style.top = `${pos.cssY - 120}px`;
+
+            // Draw magnified area inside Loupe
+            const zoomLevel = 4;
+            const srcSize = 100 / zoomLevel; // How many pixels to grab
+            
+            loupeCtx.imageSmoothingEnabled = false; // Pixelated look
+            loupeCtx.clearRect(0, 0, 100, 100);
+            loupeCtx.drawImage(
+                imgCanvas,
+                pos.x - (srcSize/2), pos.y - (srcSize/2), srcSize, srcSize, // Source (Grab area)
+                0, 0, 100, 100 // Destination (Loupe canvas)
+            );
+
+            // Get Color of exact hovered pixel
+            const pixelData = ctx.getImageData(pos.x, pos.y, 1, 1).data;
+            updateColorUI(pixelData[0], pixelData[1], pixelData[2], false);
+        });
+
+        // 3. Click to Pick Color
+        imgCanvas.addEventListener('click', (e) => {
+            const pos = getMousePos(imgCanvas, e);
+            const pixelData = ctx.getImageData(pos.x, pos.y, 1, 1).data;
+            
+            const r = pixelData[0], g = pixelData[1], b = pixelData[2];
+            updateColorUI(r, g, b, true);
+        });
+
+        // Update UI Strings
+        function updateColorUI(r, g, b, isClick) {
+            const hex = rgbToHex(r, g, b);
+            const rgb = `rgb(${r}, ${g}, ${b})`;
+            const hsl = rgbToHsl(r, g, b);
+
+            mainSwatch.style.backgroundColor = hex;
+            colorName.innerText = hex;
+            hexInput.value = hex;
+            rgbInput.value = rgb;
+            hslInput.value = hsl;
+
+            if (isClick) {
+                currentHex = hex;
+                addToHistory(hex);
+                
+                // Visual feedback on click
+                loupeCanvas.style.borderColor = hex;
+                setTimeout(() => loupeCanvas.style.borderColor = '#fff', 300);
+            }
+        }
+
+        // 4. Auto Palette Generator (Color Thief)
+        function generateAutoPalette() {
+            paletteContainer.innerHTML = ''; // Clear old
+            
+            // Ensure image is fully loaded before stealing colors
+            if (hiddenImg.complete) {
+                try {
+                    // Get Top 6 colors
+                    const palette = colorThief.getPalette(hiddenImg, 6);
+                    palette.forEach(color => {
+                        const hex = rgbToHex(color[0], color[1], color[2]);
+                        createMiniSwatch(hex, paletteContainer);
+                    });
+                } catch(err) {
+                    console.error("ColorThief Error:", err);
+                    paletteContainer.innerHTML = '<small>Palette generation failed (usually due to transparent image).</small>';
+                }
+            } else {
+                hiddenImg.addEventListener('load', generateAutoPalette);
+            }
+        }
+
+        // 5. History & Swatches Logic
+        function addToHistory(hex) {
+            if (historyColors.has(hex)) return; // No duplicates
+            historyColors.add(hex);
+            createMiniSwatch(hex, historyContainer);
+        }
+
+        function createMiniSwatch(hex, container) {
+            const swatch = document.createElement('div');
+            swatch.className = 'mini-swatch';
+            swatch.style.backgroundColor = hex;
+            swatch.title = `Click to load ${hex}`;
+            
+            swatch.addEventListener('click', () => {
+                // Parse hex back to RGB to update everything accurately
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                updateColorUI(r, g, b, false); // Update UI
+                copyToClipboard('hex-input'); // Auto-copy on swatch click
+            });
+
+            container.appendChild(swatch);
+        }
+
+        // 6. Copy to Clipboard Utility
+        window.copyToClipboard = function(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* For mobile devices */
+            navigator.clipboard.writeText(copyText.value);
+            
+            // Show Toast
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        // --- Math Utilities for Colors ---
+        function rgbToHex(r, g, b) {
+            return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase();
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255, g /= 255, b /= 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max == min) {
+                h = s = 0; // achromatic
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        }
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

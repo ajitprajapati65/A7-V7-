@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Object from Photo Online - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        /* Brush canvas overlay styling */
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+        #image-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            border-radius: 12px;
+            touch-action: none; /* Mobile touch drawing ke liye zaroori hai */
+        }
+        .tool-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .small-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .small-btn:hover { background: var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../index.html#basic-editing">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Remove Object from Photo</h1>
+            <p>Highlight any unwanted object, person, or text, and let AI erase it seamlessly.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🪄</div>
+                    <h3>Drag & Drop to Remove Object</h3>
+                    <p style="color: #64748b; margin: 10px 0;">or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-container" id="canvas-wrapper" style="display: none;">
+                    <canvas id="image-canvas"></canvas>
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+                
+                <div id="loading-msg" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 25px; border-radius: 30px; font-weight: bold; z-index: 10; text-align: center;">
+                    <span id="loading-text">⏳ AI is magicaly erasing object...</span>
+                </div>
+            </div>
+
+            <div class="controls-area">
+                <div class="control-group">
+                    <div class="tool-options" id="brush-tools" style="display: none;">
+                        <span style="color: var(--text-main); font-weight: bold;">Brush Tool</span>
+                        <button class="small-btn" id="clear-btn">🧹 Clear Brush</button>
+                    </div>
+
+                    <div class="slider-header">
+                        <label>Brush Size <span id="brush-value">(20px)</span></label>
+                    </div>
+                    <input type="range" min="5" max="100" value="20" class="modern-slider" id="brush-slider" disabled>
+                    
+                    <div style="margin-top: 15px;">
+                        <small style="color: var(--text-light);"><strong>Tip:</strong> Paint over the object you want to remove completely.</small>
+                    </div>
+                </div>
+
+                <div class="action-buttons" style="margin-top: auto;">
+                    <button class="primary-btn" id="remove-obj-btn" disabled>✨ Remove Object</button>
+                    <button class="primary-btn" id="download-btn" style="display: none; background: #10b981;">⬇️ Download Image</button>
+                    <button class="secondary-btn" onclick="location.reload()">+ Try New Image</button>
+                </div>
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>How to Erase Objects</h2>
+            <ol>
+                <li><strong>Upload Photo:</strong> Select the image containing the unwanted object.</li>
+                <li><strong>Brush Over:</strong> Use the brush tool to paint over the object, person, or text you want to vanish. Adjust brush size if needed.</li>
+                <li><strong>Erase:</strong> Click 'Remove Object' and our AI will reconstruct the background behind the object instantly.</li>
+                <li><strong>Download:</strong> Save your clean, flawless image!</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Dark Mode
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const dropZone = document.getElementById('drop-zone');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const imgCanvas = document.getElementById('image-canvas');
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const brushSlider = document.getElementById('brush-slider');
+        const brushValue = document.getElementById('brush-value');
+        const clearBtn = document.getElementById('clear-btn');
+        const removeObjBtn = document.getElementById('remove-obj-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const loadingMsg = document.getElementById('loading-msg');
+        const brushTools = document.getElementById('brush-tools');
+
+        const imgCtx = imgCanvas.getContext('2d');
+        const drawCtx = drawCanvas.getContext('2d');
+
+        let currentImage = new Image();
+        let isDrawing = false;
+        let brushSize = 20;
+
+        // File Upload Handling
+        browseBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0 && this.files[0].type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImage.src = e.target.result;
+                    currentImage.onload = () => setupCanvas();
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // Setup Canvas Size & Drawing tools
+        function setupCanvas() {
+            dropContent.style.display = 'none';
+            canvasWrapper.style.display = 'inline-block';
+            brushTools.style.display = 'flex';
+            brushSlider.disabled = false;
+            removeObjBtn.disabled = false;
+
+            // Display size logic
+            const maxWidth = dropZone.clientWidth - 40; 
+            const maxHeight = 500;
+            let ratio = Math.min(maxWidth / currentImage.width, maxHeight / currentImage.height);
+            if (ratio > 1) ratio = 1;
+
+            const finalWidth = currentImage.width * ratio;
+            const finalHeight = currentImage.height * ratio;
+
+            // Set internal resolution
+            imgCanvas.width = finalWidth;
+            imgCanvas.height = finalHeight;
+            drawCanvas.width = finalWidth;
+            drawCanvas.height = finalHeight;
+
+            // Draw Original Image
+            imgCtx.drawImage(currentImage, 0, 0, finalWidth, finalHeight);
+
+            // Setup Brush properties
+            drawCtx.lineCap = 'round';
+            drawCtx.lineJoin = 'round';
+            drawCtx.strokeStyle = 'rgba(255, 50, 50, 0.6)'; // Neon red transparent brush
+            drawCtx.lineWidth = brushSize;
+        }
+
+        // Brush Slider
+        brushSlider.addEventListener('input', function() {
+            brushSize = this.value;
+            brushValue.innerText = `(${brushSize}px)`;
+            drawCtx.lineWidth = brushSize;
+        });
+
+        // Drawing Logic
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX || evt.touches[0].clientX) - rect.left,
+                y: (evt.clientY || evt.touches[0].clientY) - rect.top
+            };
+        }
+
+        const startDrawing = (e) => {
+            isDrawing = true;
+            const pos = getMousePos(drawCanvas, e);
+            drawCtx.beginPath();
+            drawCtx.moveTo(pos.x, pos.y);
+            e.preventDefault();
+        };
+
+        const draw = (e) => {
+            if (!isDrawing) return;
+            const pos = getMousePos(drawCanvas, e);
+            drawCtx.lineTo(pos.x, pos.y);
+            drawCtx.stroke();
+            e.preventDefault();
+        };
+
+        const stopDrawing = () => {
+            isDrawing = false;
+            drawCtx.closePath();
+        };
+
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', draw);
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Mobile Touch Support
+        drawCanvas.addEventListener('touchstart', startDrawing);
+        drawCanvas.addEventListener('touchmove', draw);
+        drawCanvas.addEventListener('touchend', stopDrawing);
+
+        // Clear Brush
+        clearBtn.addEventListener('click', () => {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        });
+
+        // Remove Object (API Logic Placeholder)
+        removeObjBtn.addEventListener('click', async () => {
+            loadingMsg.style.display = 'block';
+            removeObjBtn.disabled = true;
+            brushSlider.disabled = true;
+            drawCanvas.style.pointerEvents = 'none'; // Disable drawing while loading
+
+            /*
+               BHAI NOTE: Object removal (Inpainting) ke liye remove.bg jaisi ek API ki zarurat padti hai
+               (Jaise Clipdrop API ya Photoroom API). 
+               Abhi yahan main ek 3-second ka dummy loading effect daal raha hu taki design pura kaam kare.
+               Jab aapke paas API key ho, to remove.bg wale page ki tarah fetch() function yahan lagana padega.
+            */
+
+            setTimeout(() => {
+                loadingMsg.style.display = 'none';
+                removeObjBtn.style.display = 'none';
+                brushTools.style.display = 'none';
+                downloadBtn.style.display = 'block';
+                
+                // For demo: Combine image and red mask (In real life, API returns cleaned image)
+                imgCtx.drawImage(drawCanvas, 0, 0); 
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                
+                alert("This is the front-end UI. Add your Inpainting API (like Photoroom/Clipdrop) to make the magic work!");
+            }, 3000);
+        });
+
+        // Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `A7-V7-Object-Removed.jpg`;
+            link.href = imgCanvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

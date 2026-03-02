@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blur Image Background Online - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="index.html">All Tools</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Blur Image Background Online</h1>
+            <p>Welcome to A7 V7 Image Tool - Make your photos pop with background blur.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🤖</div>
+                    <h3>Drag & Drop to apply AI Blur</h3>
+                    <p style="color: #64748b; margin: 10px 0;">or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <img id="preview-img" style="display: none;" crossorigin="anonymous">
+                
+                <canvas id="result-canvas" style="display: none; max-width: 100%; max-height: 500px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);"></canvas>
+                
+                <div id="loading-msg" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 15px 25px; border-radius: 30px; font-weight: bold; z-index: 10;">
+                    ⏳ AI is scanning subject... Please wait
+                </div>
+            </div>
+
+            <div class="controls-area">
+                <div class="control-group">
+                    <div class="slider-header">
+                        <label>Background Blur <span id="blur-value">(0)</span></label>
+                    </div>
+                    <input type="range" min="0" max="25" value="0" class="modern-slider" id="blur-slider" disabled>
+                    
+                    <div class="slider-header" style="margin-top: 15px;">
+                        <label>Edge Smoothness <span id="edge-value">(3)</span></label>
+                    </div>
+                    <input type="range" min="0" max="20" value="3" class="modern-slider" id="edge-slider" disabled>
+
+                    <div style="margin-top: 15px;">
+                        <small id="model-status" style="color: #eab308; font-weight: bold;">Loading High-Accuracy AI Model... Please wait.</small>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="primary-btn" id="download-btn" disabled>Download HQ Image</button>
+                    <button class="secondary-btn" onclick="location.reload()">+ Try New Image</button>
+                </div>
+            </div>
+        </section>
+
+       <section class="info-content">
+    <h2>How It Works</h2>
+    <ol>
+        <li><strong>Upload Your Image</strong> - Drag & drop or browse to select the photo you want to edit.</li>
+        <li><strong>Smart AI Scanning</strong> - Our optimized AI instantly scans the image to separate the main subject from the background with high accuracy.</li>
+        <li><strong>Adjust Background Blur</strong> - Use the real-time slider to control how soft or strong you want the background blur to be (Level 0-25).</li>
+        <li><strong>Refine with Edge Smoothness</strong> - Fine-tune the edges around your subject using the new smoothness slider for a flawless, natural blend.</li>
+        <li><strong>Download HQ Output</strong> - Once you are perfectly satisfied with the result, hit download to save your high-quality portrait image.</li>
+    </ol>
+    <p>That's it - a perfect studio-style photo ready in seconds!</p>
+
+    <h2>Why Use Our Blur Background Tool?</h2>
+    <ul>
+        <li><strong>Zero-Lag Real-Time Editing</strong> - Our AI smartly caches the subject mask. This means once the image is scanned, adjusting the blur and edge sliders is instant and completely lag-free.</li>
+        <li><strong>High-Accuracy Detection</strong> - Upgraded AI models automatically find the main subject (even complex shapes) without requiring you to manually select anything.</li>
+        <li><strong>Edge Smoothness Control</strong> - No more harsh cutouts! The dedicated edge smoothness slider ensures the subject blends seamlessly with the blurred background.</li>
+        <li><strong>100% Private & Secure</strong> - Powered by browser-based AI (TensorFlow.js). Your photos never leave your device, meaning zero server uploads and complete privacy.</li>
+        <li><strong>Professional DSLR Look</strong> - Create expensive-looking studio portrait shots instantly without paying for heavy software like Photoshop.</li>
+        <li><strong>Completely Free & No Watermarks</strong> - Enjoy unlimited HD exports with absolutely no hidden costs or annoying watermarks.</li>
+    </ul>
+
+    <h2>Advanced Editing Capabilities</h2>
+    <p>Our tool goes beyond simple background blurring by giving you granular control over the final output:</p>
+    <ul>
+        <li><strong>Dynamic Bokeh Effect</strong> - Accurately simulates the depth-of-field found in high-end camera lenses, applying a natural and smooth transition to the background.</li>
+        <li><strong>Smart Feathering</strong> - Specifically designed to handle tricky areas like hair and clothing edges, ensuring the focused subject doesn't look like a cheap sticker pasted on a blurry background.</li>
+    </ul>
+
+    <h2>Perfect for Everyone</h2>
+    <ul>
+        <li><strong>Social Media Users</strong> - Elevate your Instagram, Facebook, and WhatsApp profile pictures with a clean, eye-catching aesthetic.</li>
+        <li><strong>Professionals & Job Seekers</strong> - Hide messy or distracting backgrounds to create the perfect, polished headshot for LinkedIn and resumes.</li>
+        <li><strong>Photographers & Creators</strong> - Save hours of post-processing time. Get quick, realistic depth-of-field edits right in your browser.</li>
+    </ul>
+</section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Dark Mode Logic
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.setAttribute('data-theme', 'light');
+        });
+        
+        // 2. Elements Fetch Karna
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const dropContent = document.getElementById('drop-content');
+        const previewImg = document.getElementById('preview-img');
+        const resultCanvas = document.getElementById('result-canvas');
+        const browseBtn = document.getElementById('browse-btn');
+        const loadingMsg = document.getElementById('loading-msg');
+        
+        const blurSlider = document.getElementById('blur-slider');
+        const blurOutput = document.getElementById('blur-value');
+        const edgeSlider = document.getElementById('edge-slider');
+        const edgeOutput = document.getElementById('edge-value');
+        const downloadBtn = document.getElementById('download-btn');
+        const modelStatus = document.getElementById('model-status');
+
+        let net; 
+        let cachedSegmentation = null; // Optimization: Subject ko ek hi baar scan karne ke liye cache
+
+        // 3. AI MODEL LOAD KARNA (More Accurate Version)
+        async function loadAIModel() {
+    try {
+        net = await bodyPix.load({
+            architecture: 'MobileNetV1',
+            outputStride: 16,
+            multiplier: 0.75, // Isko 0.75 hi rakho stability ke liye
+            quantBytes: 2
+        });
+        modelStatus.innerText = "✅ High-Accuracy AI Ready!";
+        modelStatus.style.color = "#22c55e";
+    } catch (error) {
+        modelStatus.innerText = "❌ Failed to load AI. Check internet.";
+        modelStatus.style.color = "red";
+        console.error(error);
+    }
+}
+        loadAIModel();
+
+        // 4. Drag & Drop Upload Logic
+        browseBtn.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
+        fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+        function handleFiles(files) {
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const file = files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    
+                    previewImg.onload = async () => {
+                        dropContent.style.display = 'none';
+                        resultCanvas.style.display = 'block';
+                        
+                        // Nayi image aate hi purana cache clear karo
+                        cachedSegmentation = null;
+                        
+                        // Sliders enable karo
+                        blurSlider.disabled = false;
+                        edgeSlider.disabled = false;
+                        
+                        // Default zero blur pe set karo initial state
+                        blurSlider.value = 0;
+                        edgeSlider.value = 3;
+                        blurOutput.innerHTML = `(0)`;
+                        edgeOutput.innerHTML = `(3)`;
+                        
+                        // Image load hote hi subject scan karna start karo
+                        await processNewImage();
+                        
+                        downloadBtn.disabled = false;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 5. ASLI AI BLUR LOGIC & OPTIMIZATION
+        
+        // Image upload hone pe ek baar segmentation generate karenge
+        async function processNewImage() {
+            if (!net || !previewImg.src) return;
+            
+            loadingMsg.style.display = 'block'; // Loading dikhao
+            
+            // AI se photo analyze karwao (high resolution pe better detection ke liye)
+            cachedSegmentation = await net.segmentPerson(previewImg, {
+                internalResolution: 'high',
+                segmentationThreshold: 0.7, // Focus area ko strict rakhne ke liye
+                maxDetections: 1
+            });
+            
+            loadingMsg.style.display = 'none'; // Loading hatao
+            
+            // Default settings ke sath blur apply karo
+            renderBlur();
+        }
+
+        // Jab user blur slider ghumayega
+        blurSlider.addEventListener('input', function() {
+            blurOutput.innerHTML = `(${this.value})`;
+            renderBlur();
+        });
+
+        // Jab user edge smoothness slider ghumayega
+        edgeSlider.addEventListener('input', function() {
+            edgeOutput.innerHTML = `(${this.value})`;
+            renderBlur();
+        });
+
+        // Sirf effect apply karne ka function (Optimized - Bina AI ko dubara run kiye)
+        function renderBlur() {
+            if (!cachedSegmentation) return; // Agar AI scan pura nahi hua toh wait karo
+
+            const backgroundBlurAmount = parseInt(blurSlider.value);
+            const edgeBlurAmount = parseInt(edgeSlider.value);
+            const flipHorizontal = false;
+
+            // Bokeh effect apply karna using cached mask
+            bodyPix.drawBokehEffect(
+                resultCanvas, previewImg, cachedSegmentation, backgroundBlurAmount,
+                edgeBlurAmount, flipHorizontal
+            );
+        }
+
+        // 6. Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'A7-V7-Portrait-Mode.jpg';
+            link.href = resultCanvas.toDataURL('image/jpeg', 0.95); // High Quality
+            link.click();
+        });
+    </script>
+</body>
+</html>
