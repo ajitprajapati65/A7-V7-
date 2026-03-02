@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A7 V7 - Advanced Editing Tools</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#basic-editing">Basic Editing</a></li>
+                        <li><a href="#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="#compression-tools">Compression</a></li>
+                        <li><a href="#special-tools">Special Effects</a></li>
+                        <li><a href="#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="#quality-tools">Quality</a></li>
+                        <li><a href="#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="#export-tools">Export & Format</a></li>
+                        <li><a href="#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+
+        <section class="hero-search">
+            <h1 class="hero-title">What do you want to edit today?</h1>
+            <div class="search-container">
+                <input type="text" id="tool-search" class="search-input" placeholder="Search tools (e.g. Blur Background, Crop...)">
+                <button class="search-btn">Search</button>
+            </div>
+        </section>
+
+        <section id="trending-tools" class="trending-section">
+            <h3 class="trending-title">Trending Tools 🔥</h3>
+            <div class="trending-container" id="dynamic-trending-tools">
+                <button class="trending-btn" onclick="window.location.href='components/remove-background.html'">Remove Background</button>
+                <button class="trending-btn">Passport Size</button>
+                <button class="trending-btn">Image Compressor</button>
+                <button class="trending-btn">Blur Background</button>
+                <button class="trending-btn">Image to PDF</button>
+                <button class="trending-btn">AI Image Upscaler</button>
+            </div>
+        </section>
+
+        <section id="basic-editing" class="feature-section">
+            <h2 class="section-title">Basic Editing</h2>
+            <div class="grid-container">
+                <button id="btn-blur-bg" class="tool-btn" onclick="window.location.href='components/blur-background.html'">Blur Background</button>
+                <button class="tool-btn" onclick="window.location.href='components/remove-background.html'">Remove Background</button>
+                <button class="tool-btn" onclick="window.location.href='components/remove-object.html'">Remove Object from Photo</button>
+                <button class="tool-btn" onclick="window.location.href='components/name-dob-photo.html'">Add Name & DOB on Photo</button>
+                
+                <button class="tool-btn" onclick="window.location.href='components/rotate-image.html'">Rotate Image</button>
+                <button class="tool-btn" onclick="window.location.href='components/rotate-image.html'">Flip Image</button>
+                <button class="tool-btn" onclick="window.location.href='components/watermark-image.html'">Watermark Images</button>
+                <button class="tool-btn" onclick="window.location.href='components/freehand-crop.html'">Freehand Crop</button>
+                
+                <button class="tool-btn" onclick="window.location.href='components/circle-crop.html'">Circle Crop</button>
+                <button class="tool-btn" onclick="window.location.href='components/square-crop.html'">Square Crop</button>
+                <button class="tool-btn" onclick="window.location.href='components/merge-photo-sign.html'">Merge Photo & Signature</button>
+                <button class="tool-btn" onclick="window.location.href='components/join-images.html'">Join Multiple Images</button>
+                
+                <button class="tool-btn" onclick="window.location.href='components/split-image.html'">Split Image</button>
+                <button class="tool-btn">Image Color Picker</button>
+                <button class="tool-btn">Edit Metadata</button>
+                <button class="tool-btn">View Metadata</button>
+                
+                <button class="tool-btn">Remove Metadata</button>
+                <button class="tool-btn">Crop PNG</button>
+            </div>
+        </section>
+
+        <section id="id-tools" class="feature-section">
+            <h2 class="section-title">Passport & ID Photo Sizes</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Passport Size</button>
+                <button class="tool-btn">Resize Sign 6cm x 2cm (300 DPI)</button>
+                <button class="tool-btn">3.5cm x 4.5cm</button>
+
+                <button class="tool-btn">Signature 50mm x 20mm</button>
+                <button class="tool-btn">35mm x 45mm</button>
+                <button class="tool-btn">2 x 2 inch</button>
+
+                <button class="tool-btn">3 x 4 inch</button>
+                <button class="tool-btn">4 x 6 inch</button>
+                <button class="tool-btn">600x600 Pixels</button>
+            </div>
+        </section>
+
+        <section id="compression-tools" class="feature-section">
+            <h2 class="section-title">Compression</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Image Compressor</button>
+                <button class="tool-btn">Reduce Size in MB</button>
+                <button class="tool-btn">Reduce Size in KB</button>
+                <button class="tool-btn">Convert KB to MB</button>
+                <button class="tool-btn">Convert MB to KB</button>
+            </div>
+        </section>
+
+        <section id="special-tools" class="feature-section">
+            <h2 class="section-title">Special Effects</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Grayscale Image</button>
+                <button class="tool-btn">Black & White</button>
+                <button class="tool-btn">Blur Image</button>
+                <button class="tool-btn">Retouch Image</button>
+                <button class="tool-btn">Add Text to Image</button>
+            </div>
+        </section>
+
+        <section id="resize-tools" class="feature-section">
+            <h2 class="section-title">Resize and Sizes</h2>
+            <div class="grid-container">
+                <button class="tool-btn">A4 Size</button>
+                <button class="tool-btn">SSC Photo Resize</button>
+                <button class="tool-btn">PAN Card</button>
+                <button class="tool-btn">UPSC Photo</button>
+                <button class="tool-btn">PSC Photo</button>
+            </div>
+        </section>
+
+        <section id="quality-tools" class="feature-section">
+            <h2 class="section-title">Quality</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Check DPI</button>
+                <button class="tool-btn">Change DPI (150,200,500)</button>
+                <button class="tool-btn">Increase Image Quality</button>
+                <button class="tool-btn">Super Resolution</button>
+            </div>
+        </section>
+
+        <section id="ai-tools" class="feature-section">
+            <h2 class="section-title">AI Powered Tools</h2>
+            <div class="grid-container">
+                <button class="tool-btn">AI Image Upscaler</button>
+                <button class="tool-btn">Auto Retouch</button>
+                <button class="tool-btn">Background Generator</button>
+                <button class="tool-btn">Style Transfer</button>
+            </div>
+        </section>
+        
+        <section id="export-tools" class="feature-section">
+            <h2 class="section-title">Export & Format</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Compress Image</button>
+                <button class="tool-btn">Convert to WebP</button>
+                <button class="tool-btn">Batch Export</button>
+                <button class="tool-btn">Generate PDF</button>
+            </div>
+        </section>
+        
+        <section id="pdf-tools" class="feature-section">
+            <h2 class="section-title">Image to PDF</h2>
+            <div class="grid-container">
+                <button class="tool-btn">Image to PDF</button>
+                <button class="tool-btn">PDF to JPG</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const toggleSwitch = document.querySelector('#checkbox');
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }    
+        });
+    </script>
+</body>
+</html>
