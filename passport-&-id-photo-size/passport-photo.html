@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport & ID Photo Maker - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        /* --- PAGE SPECIFIC THEME OVERRIDE (Teal/Emerald) --- */
+        :root {
+            --primary-color: #0d9488; /* Professional Teal */
+            --hover-color: #0f766e;
+        }
+        [data-theme="dark"] {
+            --primary-color: #14b8a6; /* Brighter Teal for Dark Mode */
+            --hover-color: #0d9488;
+        }
+
+        .canvas-wrapper {
+            padding: 0;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .img-container {
+            width: 100%;
+            height: 100%;
+            background-color: #e2e8f0;
+        }
+        [data-theme="dark"] .img-container {
+            background-color: #0f172a;
+        }
+
+        img#image-to-crop {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* --- Custom UI for Passport Page --- */
+        .step-title {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-title span {
+            background: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .preset-btn {
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .preset-btn:hover {
+            border-color: var(--primary-color);
+        }
+        .preset-btn.active {
+            background: rgba(13, 148, 136, 0.1);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .preset-btn small {
+            display: block;
+            font-weight: 400;
+            color: var(--text-light);
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
+
+        /* Background Color Picker for PNGs */
+        .bg-color-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .bg-color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .bg-color-btn.active {
+            transform: scale(1.15);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .dimension-info {
+            background: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        header .logo { color: #2563eb !important; }
+        
+        header .logo,
+        .footer-brand h2 {
+            color: #2563eb !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Passport & ID Photo Maker</h1>
+            <p>Automatically crop and resize your photo to exact official dimensions (300 DPI).</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🛂</div>
+                    <h3>Upload Photo for ID</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">Face forward, neutral expression recommended.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <div class="img-container">
+                        <img id="image-to-crop" src="" alt="Picture">
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="step-title"><span>1</span> Select Document Type</div>
+                    <div class="preset-grid">
+                        <button class="preset-btn active" data-ratio="0.7777" data-width="413" data-height="531">
+                            🇮🇳 Indian Passport
+                            <small>3.5 x 4.5 cm (413x531 px)</small>
+                        </button>
+                        
+                        <button class="preset-btn" data-ratio="1" data-width="600" data-height="600">
+                            🇺🇸 US / 2x2 Inch
+                            <small>51 x 51 mm (600x600 px)</small>
+                        </button>
+
+                        <button class="preset-btn" data-ratio="0.7142" data-width="295" data-height="413">
+                            💳 PAN Card
+                            <small>2.5 x 3.5 cm</small>
+                        </button>
+
+                        <button class="preset-btn" data-ratio="0.8" data-width="236" data-height="295">
+                            📮 Stamp Size
+                            <small>2.0 x 2.5 cm</small>
+                        </button>
+                    </div>
+
+                    <div class="step-title"><span>2</span> Background Color</div>
+                    <small style="color: var(--text-light); display: block; margin-bottom: 10px;">If your image has a transparent background (PNG), it will be replaced with:</small>
+                    <div class="bg-color-options">
+                        <div class="bg-color-btn active" data-color="#FFFFFF" style="background: #FFFFFF;" title="White"></div>
+                        <div class="bg-color-btn" data-color="#E0F2FE" style="background: #E0F2FE;" title="Light Blue"></div>
+                        <div class="bg-color-btn" data-color="#FEE2E2" style="background: #FEE2E2;" title="Light Red"></div>
+                        <div class="bg-color-btn" data-color="transparent" style="background: repeating-conic-gradient(#ccc 0 25%, transparent 0 50%) 50% / 10px 10px;" title="Keep Transparent"></div>
+                    </div>
+
+                    <div class="dimension-info">
+                        Final Output: <strong id="output-dim">413 x 531 px</strong> (300 DPI)
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: auto;">
+                        <button class="primary-btn" id="download-btn" style="width: 100%;">💾 Download Print-Ready JPG</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%; margin-top: 10px;">+ New Photo</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload a clear photo of your face.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>How to Make the Perfect ID Photo</h2>
+            <ul>
+                <li><strong>Look Straight:</strong> Ensure you are looking directly at the camera with both ears visible.</li>
+                <li><strong>Align the Face:</strong> Use your mouse to drag and zoom the image inside the crop box. Your face should take up about 70-80% of the box.</li>
+                <li><strong>Auto-Resizing:</strong> You don't need to worry about pixels or dimensions. Select your document type, and we automatically generate the exact pixel size required at 300 DPI (Standard for printing).</li>
+                <li><strong>Solid Backgrounds:</strong> Official documents require solid backgrounds. If you used our "Remove Background" tool first, upload that transparent PNG here, and choose White or Blue as your background color.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // UI Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        // Control Elements
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const bgColorBtns = document.querySelectorAll('.bg-color-btn');
+        const outputDim = document.getElementById('output-dim');
+        const downloadBtn = document.getElementById('download-btn');
+
+        let cropper = null;
+        let targetWidth = 413; // Default Indian Passport
+        let targetHeight = 531;
+        let selectedBgColor = "#FFFFFF"; // Default White
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    
+                    dropContent.style.display = 'none';
+                    statusBox.style.display = 'none';
+                    canvasContainer.style.display = 'block';
+                    editingTools.style.display = 'block';
+                    
+                    initCropper();
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 2. Initialize Cropper with Fixed Aspect Ratio
+        function initCropper() {
+            if (cropper) { cropper.destroy(); }
+
+            // Get initial ratio from the active button
+            const activeBtn = document.querySelector('.preset-btn.active');
+            const initialRatio = parseFloat(activeBtn.getAttribute('data-ratio'));
+
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: initialRatio,
+                viewMode: 1, 
+                dragMode: 'move', 
+                autoCropArea: 0.9,
+                guides: true, // Show grid to help align eyes/face
+                center: true,
+                highlight: false,
+                cropBoxMovable: false, // Force user to move image, not the box
+                cropBoxResizable: false, // Lock the box size, user zooms image
+                toggleDragModeOnDblclick: false,
+            });
+        }
+
+        // 3. Preset Button Logic (Change ID Type)
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(!cropper) return;
+                
+                presetBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update settings
+                const ratio = parseFloat(btn.getAttribute('data-ratio'));
+                targetWidth = parseInt(btn.getAttribute('data-width'));
+                targetHeight = parseInt(btn.getAttribute('data-height'));
+                
+                outputDim.innerText = `${targetWidth} x ${targetHeight} px`;
+                cropper.setAspectRatio(ratio);
+            });
+        });
+
+        // 4. Background Color Selection
+        bgColorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                bgColorBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBgColor = btn.getAttribute('data-color');
+            });
+        });
+
+        // 5. Download Logic (Exact Resizing & Background Fill)
+        downloadBtn.addEventListener('click', () => {
+            if (!cropper) return;
+
+            // Get the cropped area
+            const croppedCanvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            if (!croppedCanvas) return;
+
+            // Create a final canvas with the EXACT required pixel dimensions
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = targetWidth;
+            finalCanvas.height = targetHeight;
+            const ctx = finalCanvas.getContext('2d');
+
+            // Fill background color if it's not transparent
+            if (selectedBgColor !== 'transparent') {
+                ctx.fillStyle = selectedBgColor;
+                ctx.fillRect(0, 0, targetWidth, targetHeight);
+            }
+
+            // Draw the cropped image onto the exact-sized canvas
+            ctx.drawImage(croppedCanvas, 0, 0, targetWidth, targetHeight);
+
+            // Determine format (If transparent, force PNG. Else JPG for passports)
+            const format = selectedBgColor === 'transparent' ? 'image/png' : 'image/jpeg';
+            const extension = selectedBgColor === 'transparent' ? 'png' : 'jpg';
+
+            // Download
+            const link = document.createElement('a');
+            link.download = `A7-V7-ID-Photo.${extension}`;
+            link.href = finalCanvas.toDataURL(format, 1.0); // Max quality
+            link.click();
+        });
+
+        // --- DRAG AND DROP LOGIC ---
+        const dropZoneElement = document.getElementById('drop-zone');
+
+        if (dropZoneElement) {
+            dropZoneElement.addEventListener('dragover', (e) => {
+                e.preventDefault(); 
+                dropZoneElement.classList.add('drag-active');
+            });
+
+            dropZoneElement.addEventListener('dragleave', () => {
+                dropZoneElement.classList.remove('drag-active');
+            });
+
+            dropZoneElement.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZoneElement.classList.remove('drag-active');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    const event = new Event('change');
+                    fileInput.dispatchEvent(event);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

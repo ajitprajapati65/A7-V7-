@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>600x600 Pixels Photo Maker - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        /* --- PAGE SPECIFIC THEME OVERRIDE (Premium Emerald Green) --- */
+        :root {
+            --primary-color: #10b981; /* Emerald 500 */
+            --hover-color: #059669;   /* Emerald 600 */
+        }
+        [data-theme="dark"] {
+            --primary-color: #34d399; /* Emerald 400 */
+            --hover-color: #10b981;   /* Emerald 500 */
+        }
+
+        /* --- RESTORING ORIGINAL BLUE FOR HEADER & FOOTER LOGO --- */
+        header .logo,
+        .footer-brand h2 {
+            color: #2563eb !important;
+        }
+
+        /* --- DARK MODE FIX FOR DRAG & DROP ZONE --- */
+        [data-theme="dark"] #drop-zone {
+            border-color: #3b82f6; 
+            background: rgba(30, 41, 59, 0.6); 
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05); 
+        }
+        [data-theme="dark"] #drop-zone.drag-active {
+            border-color: #60a5fa; 
+            background: rgba(59, 130, 246, 0.15); 
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.2); 
+        }
+        [data-theme="dark"] #drop-content h3 { color: #f8fafc; }
+        [data-theme="dark"] #drop-content p,
+        [data-theme="dark"] #drop-content small { color: #94a3b8 !important; }
+
+        .canvas-wrapper {
+            padding: 0;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .img-container {
+            width: 100%;
+            height: 100%;
+            background-color: #e2e8f0;
+        }
+        [data-theme="dark"] .img-container {
+            background-color: #0f172a;
+        }
+
+        img#image-to-crop {
+            display: block;
+            max-width: 100%;
+        }
+
+        /* Custom Cropper Styles for Emerald Theme */
+        .cropper-view-box { outline: 2px solid var(--primary-color); }
+        .cropper-line { background-color: var(--primary-color); }
+        .cropper-point { background-color: var(--primary-color); }
+
+        /* --- Custom UI --- */
+        .step-title {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-title span {
+            background: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+
+        .preset-btn {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: default; /* Non-clickable since it's fixed */
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .preset-btn small {
+            display: block;
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .bg-color-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .bg-color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .bg-color-btn.active {
+            transform: scale(1.15);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .quality-control {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        [data-theme="dark"] .quality-control { background: rgba(255,255,255,0.02); }
+        
+        .quality-control label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .quality-control input[type=range] { width: 100%; accent-color: var(--primary-color); cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>600x600 Pixels Photo Maker</h1>
+            <p>Strictly locked to 600x600 pixels. The ultimate format for online visa forms and digital ID uploads.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🖥️</div>
+                    <h3>Upload Digital Photo</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn" style="background: var(--primary-color);">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">Ensure your face is well-lit and centered.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <div class="img-container">
+                        <img id="image-to-crop" src="" alt="Picture">
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="step-title"><span>1</span> Output Resolution</div>
+                    <div class="preset-btn">
+                        Fixed Digital Size
+                        <small>600 x 600 px (1:1 Ratio)</small>
+                    </div>
+
+                    <div class="step-title"><span>2</span> Background Fill</div>
+                    <div class="bg-color-options">
+                        <div class="bg-color-btn active" data-color="#FFFFFF" style="background: #FFFFFF;" title="White (Required for Visas)"></div>
+                        <div class="bg-color-btn" data-color="#F1F5F9" style="background: #F1F5F9;" title="Light Gray"></div>
+                        <div class="bg-color-btn" data-color="#E0F2FE" style="background: #E0F2FE;" title="Light Blue"></div>
+                        <div class="bg-color-btn" data-color="transparent" style="background: repeating-conic-gradient(#ccc 0 25%, transparent 0 50%) 50% / 10px 10px;" title="Keep Transparent (PNG)"></div>
+                    </div>
+
+                    <div class="step-title"><span>3</span> Export File Size Limit</div>
+                    <div class="quality-control">
+                        <label>
+                            <span>Image Quality</span>
+                            <span id="quality-value">85% (Approx ~80KB)</span>
+                        </label>
+                        <input type="range" id="quality-slider" min="0.4" max="1.0" step="0.05" value="0.85">
+                        <small style="color: var(--text-light); font-size: 0.75rem; display: block; margin-top: 5px;">Online portals strictly require photos ≤ 240 KB.</small>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: auto;">
+                        <button class="primary-btn" id="download-btn" style="width: 100%;">💾 Download 600x600 Photo</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%; margin-top: 10px;">+ Upload New Photo</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload a clear photo of your face.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Digital 600x600 Upload Guidelines</h2>
+            <ul>
+                <li><strong>Perfect Square:</strong> 600x600 pixels means a 1:1 aspect ratio. Our tool strictly locks your crop box into a perfect square so it can't be stretched or squashed.</li>
+                <li><strong>Head Sizing:</strong> Just like a 2x2 inch physical photo, your head should take up about 50% to 69% of the height. Keep your face perfectly in the center.</li>
+                <li><strong>No Scanning Needed:</strong> If you have a normal selfie, simply upload it here. Downloading directly from this tool provides a native digital file, which is much cleaner than scanning a physical photo.</li>
+                <li><strong>File Size (KB):</strong> The US State Department and most online applications require the file to be under 240 KB. The default 85% quality slider will easily keep your photo under this limit while preserving high clarity.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="../index.html#basic-editing">Remove Background</a></li>
+                    <li><a href="blur-background.html">Blur Background</a></li>
+                    <li><a href="circle-crop.html">Circle Crop</a></li>
+                    <li><a href="../index.html#special-tools">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Theme Logic (Persistent) ---
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') toggleSwitch.checked = true;
+        }
+
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }    
+        });
+
+        // --- 2. Variables & Elements ---
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        const bgColorBtns = document.querySelectorAll('.bg-color-btn');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityValue = document.getElementById('quality-value');
+        const downloadBtn = document.getElementById('download-btn');
+
+        let cropper = null;
+        let targetWidth = 600;  // Strictly locked to 600
+        let targetHeight = 600; // Strictly locked to 600
+        let selectedBgColor = "#FFFFFF"; // Default White
+        let exportQuality = 0.85; // 85% is ideal for sub-200KB sizes
+
+        const aspectRatio = 1 / 1; // Square exactly
+
+        // --- 3. Upload & Initialize ---
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    
+                    dropContent.style.display = 'none';
+                    statusBox.style.display = 'none';
+                    canvasContainer.style.display = 'block';
+                    editingTools.style.display = 'block';
+                    
+                    initCropper();
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        function initCropper() {
+            if (cropper) { cropper.destroy(); }
+            
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: aspectRatio,
+                viewMode: 1, 
+                dragMode: 'move', 
+                autoCropArea: 0.8,
+                guides: true, 
+                center: true,
+                cropBoxMovable: false, 
+                cropBoxResizable: false, 
+                toggleDragModeOnDblclick: false,
+            });
+        }
+
+        // --- 4. Controls Logic ---
+
+        // Background Color Selection
+        bgColorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                bgColorBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBgColor = btn.getAttribute('data-color');
+            });
+        });
+
+        // Quality/Compression Slider
+        qualitySlider.addEventListener('input', function() {
+            exportQuality = parseFloat(this.value);
+            let displayPerc = Math.round(exportQuality * 100);
+            
+            let estKB = "";
+            if(displayPerc >= 95) estKB = "~150-200KB";
+            else if(displayPerc >= 80) estKB = "~60-100KB";
+            else estKB = "< 50KB";
+
+            qualityValue.innerText = `${displayPerc}% (${estKB})`;
+        });
+
+        // --- 5. Export / Download ---
+        downloadBtn.addEventListener('click', () => {
+            if (!cropper) return;
+
+            const croppedCanvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            if (!croppedCanvas) return;
+
+            // Generate exactly 600x600 canvas
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = targetWidth;
+            finalCanvas.height = targetHeight;
+            const ctx = finalCanvas.getContext('2d');
+
+            // Fill Background if chosen
+            if (selectedBgColor !== 'transparent') {
+                ctx.fillStyle = selectedBgColor;
+                ctx.fillRect(0, 0, targetWidth, targetHeight);
+            }
+
+            ctx.drawImage(croppedCanvas, 0, 0, targetWidth, targetHeight);
+
+            // Determine format
+            const format = selectedBgColor === 'transparent' ? 'image/png' : 'image/jpeg';
+            const extension = selectedBgColor === 'transparent' ? 'png' : 'jpg';
+
+            const link = document.createElement('a');
+            link.download = `A7-V7-600x600-Digital-Photo.${extension}`;
+            link.href = finalCanvas.toDataURL(format, exportQuality); 
+            link.click();
+        });
+
+        // --- Drag and Drop Logic ---
+        const dropZoneElement = document.getElementById('drop-zone');
+        if (dropZoneElement) {
+            dropZoneElement.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneElement.classList.add('drag-active'); });
+            dropZoneElement.addEventListener('dragleave', () => { dropZoneElement.classList.remove('drag-active'); });
+            dropZoneElement.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZoneElement.classList.remove('drag-active');
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    const event = new Event('change'); fileInput.dispatchEvent(event);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
