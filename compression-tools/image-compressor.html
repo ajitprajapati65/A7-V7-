@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - Reduce Photo Size Online - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    
+    <style>
+        /* --- PAGE SPECIFIC THEME OVERRIDE (Energetic Orange) --- */
+        :root {
+            --primary-color: #f97316; /* Orange 500 */
+            --hover-color: #ea580c;   /* Orange 600 */
+        }
+        [data-theme="dark"] {
+            --primary-color: #fb923c; /* Orange 400 */
+            --hover-color: #f97316;   /* Orange 500 */
+        }
+
+        /* --- RESTORING ORIGINAL BLUE FOR HEADER & FOOTER LOGO --- */
+        header .logo,
+        .footer-brand h2 {
+            color: #2563eb !important;
+        }
+
+        /* --- DARK MODE FIX FOR DRAG & DROP ZONE --- */
+        [data-theme="dark"] #drop-zone {
+            border-color: #3b82f6; 
+            background: rgba(30, 41, 59, 0.6); 
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05); 
+        }
+        [data-theme="dark"] #drop-zone.drag-active {
+            border-color: #60a5fa; 
+            background: rgba(59, 130, 246, 0.15); 
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.2); 
+        }
+        [data-theme="dark"] #drop-content h3 { color: #f8fafc; }
+        [data-theme="dark"] #drop-content p,
+        [data-theme="dark"] #drop-content small { color: #94a3b8 !important; }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            height: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+
+        /* --- Compression UI Stats --- */
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-box h4 {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box .size-value {
+            color: var(--text-main);
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        .stat-divider {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .new-size {
+            color: var(--primary-color) !important;
+        }
+
+        /* Slider Styles */
+        .quality-control {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        [data-theme="dark"] .quality-control { background: rgba(255,255,255,0.02); }
+        
+        .quality-control label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .quality-control input[type=range] { 
+            width: 100%; 
+            accent-color: var(--primary-color); 
+            cursor: pointer;
+            height: 6px;
+        }
+
+        /* Hidden Canvas for Processing */
+        #processing-canvas { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Image Compressor (Reduce Size)</h1>
+            <p>Smartly reduce your photo's file size in KB/MB without losing visible quality.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.2;">
+                <input type="file" id="file-input" accept="image/jpeg, image/png, image/webp" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🗜️</div>
+                    <h3>Upload Image to Compress</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn" style="background: var(--primary-color);">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">Supports JPG, PNG, and WebP formats.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <img id="preview-img" src="" alt="Compressed Preview">
+                    <canvas id="processing-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1.5;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="stats-container">
+                        <div class="stat-box">
+                            <h4>Original Size</h4>
+                            <div class="size-value" id="original-size">0 KB</div>
+                        </div>
+                        
+                        <div class="stat-divider">➜</div>
+                        
+                        <div class="stat-box">
+                            <h4>Compressed Size</h4>
+                            <div class="size-value new-size" id="compressed-size">0 KB</div>
+                        </div>
+                    </div>
+
+                    <div class="quality-control">
+                        <label>
+                            <span>Compression Level</span>
+                            <span id="quality-percentage">70% Quality</span>
+                        </label>
+                        <input type="range" id="quality-slider" min="0.1" max="1.0" step="0.05" value="0.7">
+                        <small style="color: var(--text-light); font-size: 0.8rem; display: block; margin-top: 8px;">
+                            Slide left for a smaller file size (KB). Slide right for better image quality.
+                        </small>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: auto;">
+                        <button class="primary-btn" id="download-btn" style="width: 100%;">💾 Download Compressed Image</button>
+                        <button class="secondary-btn" id="reset-btn" style="width: 100%; margin-top: 10px;">+ Compress Another Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image to check its size.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Compress Images?</h2>
+            <ul>
+                <li><strong>Form Uploads:</strong> Government portals, job applications, and university forms strictly require photos under 50KB or 100KB. This tool helps you hit that target instantly.</li>
+                <li><strong>Website Speed:</strong> If you are a web developer or blogger, uploading 5MB images will slow down your site. Compressing them to WebP/JPG speeds up loading times significantly.</li>
+                <li><strong>Save Storage Space:</strong> Shrink large camera photos to free up space on your phone or Google Drive without making the photos look blurry.</li>
+            </ul>
+            <br>
+            <h2>How Our Pro Compressor Works</h2>
+            <p>Unlike basic websites that just guess the size, our tool runs a <strong>Live Browser Engine</strong>. When you move the slider, it actually compresses the image in real-time inside your browser and calculates the exact Output KB. <br><br><strong>100% Private:</strong> Your images are NEVER uploaded to any server. The compression happens securely on your own device.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="../index.html#basic-editing">Remove Background</a></li>
+                    <li><a href="blur-background.html">Blur Background</a></li>
+                    <li><a href="circle-crop.html">Circle Crop</a></li>
+                    <li><a href="../index.html#special-tools">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Theme Logic (Persistent) ---
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') toggleSwitch.checked = true;
+        }
+
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }    
+        });
+
+        // --- 2. Variables & Elements ---
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const previewImg = document.getElementById('preview-img');
+        const processingCanvas = document.getElementById('processing-canvas');
+        const ctx = processingCanvas.getContext('2d');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        const originalSizeText = document.getElementById('original-size');
+        const compressedSizeText = document.getElementById('compressed-size');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityPercentage = document.getElementById('quality-percentage');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn'); // Reset Button Target kiya
+
+        let originalFile = null;
+        let originalFileName = "image.jpg";
+        let finalCompressedBlob = null;
+
+        // Utility: Format Bytes to KB/MB
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // --- 3. Upload Logic ---
+        browseBtn.addEventListener('click', () => fileInput.click());
+        
+        // Jab bhi file input change hoga (Nayi image aayegi)
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                originalFile = this.files[0];
+                originalFileName = originalFile.name.split('.')[0]; // Get name without extension
+
+                // Show original file size
+                originalSizeText.innerText = formatBytes(originalFile.size);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Set Canvas Dimensions to match image
+                        processingCanvas.width = img.width;
+                        processingCanvas.height = img.height;
+                        
+                        // Draw image on canvas for processing
+                        ctx.drawImage(img, 0, 0, img.width, img.height);
+                        
+                        // Set preview image
+                        previewImg.src = e.target.result;
+
+                        // Display UI
+                        dropContent.style.display = 'none';
+                        statusBox.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        editingTools.style.display = 'block';
+
+                        // Run initial compression
+                        compressImage();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(originalFile);
+            }
+        });
+
+        // --- 4. Real-time Compression Logic ---
+        function compressImage() {
+            const quality = parseFloat(qualitySlider.value);
+            
+            // Generate a Blob (file data) from the canvas to calculate exact size
+            // Always convert to JPG for best compression results
+            processingCanvas.toBlob((blob) => {
+                if (blob) {
+                    finalCompressedBlob = blob; // Save for download
+                    compressedSizeText.innerText = formatBytes(blob.size); // Live update size
+                    
+                    // Update the preview image with the compressed version
+                    const newUrl = URL.createObjectURL(blob);
+                    previewImg.src = newUrl;
+                }
+            }, 'image/jpeg', quality);
+        }
+
+        // Trigger compression when slider is moved
+        qualitySlider.addEventListener('input', function() {
+            const perc = Math.round(this.value * 100);
+            qualityPercentage.innerText = `${perc}% Quality`;
+            compressImage(); // Instantly calculate new size
+        });
+
+        // --- 5. Download Logic ---
+        downloadBtn.addEventListener('click', () => {
+            if (!finalCompressedBlob) return;
+
+            const url = URL.createObjectURL(finalCompressedBlob);
+            const link = document.createElement('a');
+            link.download = `A7-V7-Compressed-${originalFileName}.jpg`;
+            link.href = url;
+            link.click();
+            
+            // Clean up memory
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+
+        // --- 6. ADD ANOTHER IMAGE LOGIC (Fixed) ---
+        resetBtn.addEventListener('click', () => {
+            fileInput.value = '';  // Purani memory clear karega
+            fileInput.click();     // Bina refresh kiye seedha naya folder popup open karega
+        });
+
+        // --- Drag and Drop Logic ---
+        const dropZoneElement = document.getElementById('drop-zone');
+        if (dropZoneElement) {
+            dropZoneElement.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneElement.classList.add('drag-active'); });
+            dropZoneElement.addEventListener('dragleave', () => { dropZoneElement.classList.remove('drag-active'); });
+            dropZoneElement.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZoneElement.classList.remove('drag-active');
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    const event = new Event('change'); fileInput.dispatchEvent(event);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

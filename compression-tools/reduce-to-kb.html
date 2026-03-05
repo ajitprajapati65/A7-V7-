@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reduce Image Size in KB - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    
+    <style>
+        /* --- PAGE SPECIFIC THEME OVERRIDE (Hot Pink / Rose) --- */
+        :root {
+            --primary-color: #db2777; /* Pink 600 */
+            --hover-color: #be185d;   /* Pink 700 */
+        }
+        [data-theme="dark"] {
+            --primary-color: #f472b6; /* Pink 400 */
+            --hover-color: #ec4899;   /* Pink 500 */
+        }
+
+        /* --- RESTORING ORIGINAL BLUE FOR HEADER & FOOTER LOGO --- */
+        header .logo,
+        .footer-brand h2 {
+            color: #2563eb !important;
+        }
+
+        /* --- DARK MODE FIX FOR DRAG & DROP ZONE --- */
+        [data-theme="dark"] #drop-zone {
+            border-color: #3b82f6; 
+            background: rgba(30, 41, 59, 0.6); 
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05); 
+        }
+        [data-theme="dark"] #drop-zone.drag-active {
+            border-color: #60a5fa; 
+            background: rgba(59, 130, 246, 0.15); 
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.2); 
+        }
+        [data-theme="dark"] #drop-content h3 { color: #f8fafc; }
+        [data-theme="dark"] #drop-content p,
+        [data-theme="dark"] #drop-content small { color: #94a3b8 !important; }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            height: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+
+        /* --- Target Size Input UI --- */
+        .target-box {
+            background: rgba(219, 39, 119, 0.05); /* Light Pink */
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .target-box label {
+            display: block;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.2);
+        }
+        
+        .kb-label {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        /* Quick Presets */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .preset-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover { border-color: var(--primary-color); }
+        .preset-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* --- Compression UI Stats --- */
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-box h4 {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box .size-value {
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        .stat-divider {
+            color: var(--text-light);
+            font-size: 1.2rem;
+        }
+
+        .new-size {
+            color: var(--primary-color) !important;
+        }
+
+        /* Loader */
+        .loader-text {
+            display: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* Hidden Canvas for Processing */
+        #processing-canvas { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Reduce Size in KB</h1>
+            <p>Perfect for online forms. Compress your photo to exactly 20KB, 50KB, or 100KB without blurring.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.2;">
+                <input type="file" id="file-input" accept="image/jpeg, image/png, image/webp" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">📉</div>
+                    <h3>Upload Photo or Signature</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn" style="background: var(--primary-color);">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">We will automatically shrink the file size.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <img id="preview-img" src="" alt="Compressed Preview">
+                    <canvas id="processing-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1.5;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="stats-container">
+                        <div class="stat-box">
+                            <h4>Original Size</h4>
+                            <div class="size-value" id="original-size">0 KB</div>
+                        </div>
+                        <div class="stat-divider">➜</div>
+                        <div class="stat-box">
+                            <h4>Final Output Size</h4>
+                            <div class="size-value new-size" id="compressed-size">Waiting...</div>
+                        </div>
+                    </div>
+
+                    <label style="display: block; color: var(--text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;">Quick Presets (Forms):</label>
+                    <div class="preset-grid">
+                        <button class="preset-btn" data-kb="20">20 KB (Signatures)</button>
+                        <button class="preset-btn active" data-kb="50">50 KB (ID Photos)</button>
+                        <button class="preset-btn" data-kb="100">100 KB (Documents)</button>
+                    </div>
+
+                    <div class="target-box">
+                        <label>Or enter custom Maximum KB limit:</label>
+                        <div class="input-group">
+                            <input type="number" id="target-value" placeholder="e.g. 50" value="50">
+                            <span class="kb-label">KB</span>
+                        </div>
+                    </div>
+
+                    <div class="loader-text" id="loader">🔄 Micro-Compressing Image...</div>
+
+                    <div class="action-buttons" style="margin-top: auto;">
+                        <button class="primary-btn" id="compress-action-btn" style="width: 100%; margin-bottom: 10px; background: #1f2937;">⚡ Compress to Target KB</button>
+                        
+                        <button class="primary-btn" id="download-btn" style="width: 100%; display: none; background: var(--primary-color);">💾 Download Perfect Photo</button>
+                        
+                        <button class="secondary-btn" id="reset-btn" style="width: 100%; margin-top: 10px;">+ Select Another Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image to begin micro-compression.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>The Micro-Compression Expert</h2>
+            <ul>
+                <li><strong>Signature Ready:</strong> Most exams (SSC, UPSC, State Boards) require signatures to be strictly between 10KB and 20KB. Just click the "20 KB" preset, and we will do the math.</li>
+                <li><strong>ID Photo Optimized:</strong> Passports and ID photos often need to be under 50KB. Our algorithm reduces the file size without pixelating your face.</li>
+                <li><strong>Auto-Resizing:</strong> If you upload a massive 5MB camera photo and ask for 20KB, reducing quality isn't enough. Our tool will intelligently shrink the physical dimensions (width/height) automatically until it fits under your strict KB limit.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="../index.html#basic-editing">Remove Background</a></li>
+                    <li><a href="blur-background.html">Blur Background</a></li>
+                    <li><a href="circle-crop.html">Circle Crop</a></li>
+                    <li><a href="../index.html#special-tools">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Theme Logic (Persistent) ---
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') toggleSwitch.checked = true;
+        }
+
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }    
+        });
+
+        // --- 2. Variables & Elements ---
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const previewImg = document.getElementById('preview-img');
+        const processingCanvas = document.getElementById('processing-canvas');
+        const ctx = processingCanvas.getContext('2d');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        const originalSizeText = document.getElementById('original-size');
+        const compressedSizeText = document.getElementById('compressed-size');
+        
+        const targetValueInput = document.getElementById('target-value');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        
+        const compressActionBtn = document.getElementById('compress-action-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn'); // Fixed reset button
+        const loader = document.getElementById('loader');
+
+        let originalFile = null;
+        let originalFileName = "image.jpg";
+        let originalImgElement = new Image();
+        let finalCompressedBlob = null;
+
+        // Utility: Format Bytes to KB
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 KB';
+            const kb = bytes / 1024;
+            if (kb >= 1024) {
+                return (kb / 1024).toFixed(2) + ' MB';
+            }
+            return kb.toFixed(2) + ' KB';
+        }
+
+        // --- 3. Upload Logic ---
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                originalFile = this.files[0];
+                originalFileName = originalFile.name.split('.')[0]; 
+
+                originalSizeText.innerText = formatBytes(originalFile.size);
+                compressedSizeText.innerText = "Waiting...";
+                downloadBtn.style.display = 'none';
+                compressActionBtn.style.display = 'block';
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalImgElement = new Image();
+                    originalImgElement.onload = () => {
+                        previewImg.src = e.target.result;
+                        dropContent.style.display = 'none';
+                        statusBox.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        editingTools.style.display = 'block';
+                    };
+                    originalImgElement.src = e.target.result;
+                };
+                reader.readAsDataURL(originalFile);
+            }
+        });
+
+        // --- Presets Logic ---
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                presetBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                targetValueInput.value = btn.getAttribute('data-kb');
+            });
+        });
+
+        // Sync preset if user types manually
+        targetValueInput.addEventListener('input', () => {
+            presetBtns.forEach(b => b.classList.remove('active'));
+        });
+
+        // --- 4. MICRO-COMPRESSION ALGORITHM ---
+        function compressToTarget(targetBytes) {
+            return new Promise((resolve) => {
+                let minQ = 0.05; 
+                let maxQ = 1.0;  
+                let bestBlob = null;
+                
+                const testCompression = (quality, scale) => {
+                    return new Promise((res) => {
+                        processingCanvas.width = originalImgElement.width * scale;
+                        processingCanvas.height = originalImgElement.height * scale;
+                        
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, processingCanvas.width, processingCanvas.height);
+                        ctx.drawImage(originalImgElement, 0, 0, processingCanvas.width, processingCanvas.height);
+                        
+                        processingCanvas.toBlob((blob) => {
+                            res(blob);
+                        }, 'image/jpeg', quality);
+                    });
+                };
+
+                const runAlgorithm = async () => {
+                    let attempts = 0;
+                    
+                    // 1. Check Quality at 100% size
+                    while (attempts < 7) { 
+                        let midQ = (minQ + maxQ) / 2;
+                        let blob = await testCompression(midQ, 1.0);
+                        
+                        if (blob.size <= targetBytes) {
+                            bestBlob = blob; 
+                            minQ = midQ;     
+                        } else {
+                            maxQ = midQ;     
+                        }
+                        attempts++;
+                    }
+
+                    // 2. If it's a huge camera photo and we need say 20KB, scaling is mandatory
+                    if (!bestBlob || bestBlob.size > targetBytes) {
+                        let scale = 0.9;
+                        while (scale > 0.05) { // Can scale down very tiny for signatures
+                            let blob = await testCompression(0.3, scale); 
+                            if (blob.size <= targetBytes) {
+                                bestBlob = blob;
+                                break;
+                            }
+                            scale -= 0.1;
+                        }
+                    }
+
+                    resolve(bestBlob);
+                };
+
+                runAlgorithm();
+            });
+        }
+
+        compressActionBtn.addEventListener('click', async () => {
+            const val = parseFloat(targetValueInput.value);
+            
+            if (isNaN(val) || val <= 0) {
+                alert("Please enter a valid KB limit.");
+                return;
+            }
+
+            let targetBytes = val * 1024; // KB to Bytes
+
+            compressActionBtn.style.display = 'none';
+            loader.style.display = 'block';
+            compressedSizeText.innerText = "Squeezing...";
+            compressedSizeText.style.color = 'var(--text-main)';
+
+            finalCompressedBlob = await compressToTarget(targetBytes);
+
+            loader.style.display = 'none';
+            downloadBtn.style.display = 'block';
+            
+            if (finalCompressedBlob) {
+                compressedSizeText.innerText = formatBytes(finalCompressedBlob.size);
+                compressedSizeText.style.color = 'var(--primary-color)';
+                
+                const newUrl = URL.createObjectURL(finalCompressedBlob);
+                previewImg.src = newUrl;
+            } else {
+                compressedSizeText.innerText = "Failed";
+                alert("Image cannot be compressed this low.");
+            }
+        });
+
+        // --- 5. Download Logic ---
+        downloadBtn.addEventListener('click', () => {
+            if (!finalCompressedBlob) return;
+
+            const url = URL.createObjectURL(finalCompressedBlob);
+            const link = document.createElement('a');
+            link.download = `A7-V7-Micro-${originalFileName}.jpg`;
+            link.href = url;
+            link.click();
+            
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+
+        // --- 6. ADD ANOTHER IMAGE LOGIC (BINA REFRESH KE) ---
+        resetBtn.addEventListener('click', () => {
+            fileInput.value = '';  // Clear file memory
+            fileInput.click();     // Open file dialog directly
+        });
+
+        // --- Drag and Drop Logic ---
+        const dropZoneElement = document.getElementById('drop-zone');
+        if (dropZoneElement) {
+            dropZoneElement.addEventListener('dragover', (e) => { e.preventDefault(); dropZoneElement.classList.add('drag-active'); });
+            dropZoneElement.addEventListener('dragleave', () => { dropZoneElement.classList.remove('drag-active'); });
+            dropZoneElement.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZoneElement.classList.remove('drag-active');
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    const event = new Event('change'); fileInput.dispatchEvent(event);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
