@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Image for Instagram & Carousels - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            background-image: 
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        [data-theme="dark"] .canvas-wrapper {
+            background-image: 
+                linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        #preview-canvas {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            z-index: 10;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Split Image Maker</h1>
+            <p>Cut your photos into perfect grids for Instagram puzzles, giant squares, or swipeable carousels.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">✂️</div>
+                    <h3>Upload Image to Split</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none; position: relative;">
+                    <canvas id="preview-canvas"></canvas>
+                    <div id="loading-overlay">⏳ Packing Images into ZIP...</div>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <h3 style="color: var(--text-main); margin-bottom: 10px;">Quick Presets</h3>
+                    <div class="preset-grid">
+                        <button class="preset-btn" onclick="setGrid(3, 3)">📱 Insta 3x3</button>
+                        <button class="preset-btn" onclick="setGrid(3, 4)">🖼️ Insta 3x4</button>
+                        <button class="preset-btn" onclick="setGrid(2, 1)">↔️ Half Split</button>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 25px;">
+                        <h3 style="color: var(--text-main); margin-bottom: 15px;">Custom Grid Size</h3>
+                        
+                        <div class="slider-header"><label>Columns (Vertical Cuts): <span id="col-val" style="font-weight: bold; color: var(--primary-color);">3</span></label></div>
+                        <input type="range" min="1" max="10" value="3" class="modern-slider" id="col-slider">
+                        
+                        <div class="slider-header" style="margin-top: 15px;"><label>Rows (Horizontal Cuts): <span id="row-val" style="font-weight: bold; color: var(--primary-color);">3</span></label></div>
+                        <input type="range" min="1" max="10" value="3" class="modern-slider" id="row-slider">
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; border-radius: 4px;">
+                        <small style="color: var(--text-main);">
+                            <strong>Total Output:</strong> <span id="total-parts" style="font-weight: bold; font-size: 1.1em;">9</span> images will be generated.
+                        </small>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981; width: 100%;">📦 Download All as ZIP</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%; margin-top: 10px;">+ Try New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image first.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Master your Social Media Feed</h2>
+            <ul>
+                <li><strong>Instagram Puzzle Grids:</strong> Upload a high-resolution photo, split it into a 3x3 grid, and upload the pieces to Instagram to create a giant, seamless image on your profile.</li>
+                <li><strong>Swipeable Carousels:</strong> Got a wide panoramic photo? Split it into 2x1 or 3x1 columns to create a continuous, seamless swipeable post.</li>
+                <li><strong>Smart ZIP Download:</strong> Nobody wants to click "Save" 9 times! Our tool automatically slices the image and packs all the pieces into a single, organized ZIP file.</li>
+                <li><strong>100% Private & High Quality:</strong> The slicing happens entirely in your web browser. No server uploads, zero quality loss, and instant processing.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const previewCanvas = document.getElementById('preview-canvas');
+        const ctx = previewCanvas.getContext('2d');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        const colSlider = document.getElementById('col-slider');
+        const rowSlider = document.getElementById('row-slider');
+        const colVal = document.getElementById('col-val');
+        const rowVal = document.getElementById('row-val');
+        const totalParts = document.getElementById('total-parts');
+        
+        const downloadBtn = document.getElementById('download-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        let currentImg = null;
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        // Display Setup
+                        dropContent.style.display = 'none';
+                        statusBox.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        editingTools.style.display = 'block';
+                        
+                        drawPreview();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 2. Preset & Slider Logic
+        window.setGrid = function(cols, rows) {
+            colSlider.value = cols;
+            rowSlider.value = rows;
+            updateValues();
+        };
+
+        colSlider.addEventListener('input', updateValues);
+        rowSlider.addEventListener('input', updateValues);
+
+        function updateValues() {
+            const cols = parseInt(colSlider.value);
+            const rows = parseInt(rowSlider.value);
+            colVal.innerText = cols;
+            rowVal.innerText = rows;
+            totalParts.innerText = cols * rows;
+            drawPreview();
+        }
+
+        // 3. Draw Preview with Live Grid Overlay
+        function drawPreview() {
+            if (!currentImg) return;
+
+            // Set internal resolution same as image
+            previewCanvas.width = currentImg.width;
+            previewCanvas.height = currentImg.height;
+
+            // Draw Base Image
+            ctx.drawImage(currentImg, 0, 0);
+
+            // Fetch Grid Values
+            const cols = parseInt(colSlider.value);
+            const rows = parseInt(rowSlider.value);
+            
+            const partWidth = currentImg.width / cols;
+            const partHeight = currentImg.height / rows;
+
+            // Overlay Styles (Bright Neon Pink/White dashed line so it's visible on any photo)
+            ctx.lineWidth = Math.max(currentImg.width * 0.005, 3); // Scale line width based on image size
+            ctx.strokeStyle = 'rgba(236, 72, 153, 0.9)'; // Pink color
+            ctx.setLineDash([15, 10]);
+
+            // Draw Vertical Lines
+            for (let i = 1; i < cols; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * partWidth, 0);
+                ctx.lineTo(i * partWidth, currentImg.height);
+                ctx.stroke();
+            }
+
+            // Draw Horizontal Lines
+            for (let i = 1; i < rows; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * partHeight);
+                ctx.lineTo(currentImg.width, i * partHeight);
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]); // Reset dash
+        }
+
+        // 4. Download Logic (Split & ZIP Generation)
+        downloadBtn.addEventListener('click', async () => {
+            if (!currentImg) return;
+
+            // Show Loading UI
+            loadingOverlay.style.display = 'flex';
+            downloadBtn.disabled = true;
+
+            const cols = parseInt(colSlider.value);
+            const rows = parseInt(rowSlider.value);
+            const partWidth = currentImg.width / cols;
+            const partHeight = currentImg.height / rows;
+
+            // Initialize JSZip
+            const zip = new JSZip();
+            const folderName = `A7_V7_Grid_${cols}x${rows}`;
+            const imgFolder = zip.folder(folderName);
+
+            // Temporary Canvas to hold each sliced piece
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = partWidth;
+            tempCanvas.height = partHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            let counter = 1;
+
+            // Loop through Rows and Columns
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    
+                    // Clear temp canvas
+                    tempCtx.clearRect(0, 0, partWidth, partHeight);
+
+                    // Draw the specific sliced part
+                    // drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+                    tempCtx.drawImage(
+                        currentImg, 
+                        c * partWidth, r * partHeight, partWidth, partHeight, // Source details
+                        0, 0, partWidth, partHeight // Destination details
+                    );
+
+                    // Convert to Base64 (JPG format)
+                    const base64Data = tempCanvas.toDataURL('image/jpeg', 0.95).split(',')[1];
+                    
+                    // Add to ZIP (Format: part_01.jpg, part_02.jpg...)
+                    const fileName = `part_${counter.toString().padStart(2, '0')}.jpg`;
+                    imgFolder.file(fileName, base64Data, {base64: true});
+                    
+                    counter++;
+                }
+            }
+
+            // Generate ZIP file and trigger download
+            try {
+                const content = await zip.generateAsync({type: "blob"});
+                const link = document.createElement('a');
+                link.download = `${folderName}.zip`;
+                link.href = URL.createObjectURL(content);
+                link.click();
+            } catch (error) {
+                console.error("ZIP Generation Failed:", error);
+                alert("Failed to generate ZIP file. Image might be too large.");
+            } finally {
+                // Hide Loading UI
+                loadingOverlay.style.display = 'none';
+                downloadBtn.disabled = false;
+            }
+        });
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

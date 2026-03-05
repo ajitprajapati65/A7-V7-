@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freehand Crop (Lasso Tool) - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .canvas-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            overflow: hidden;
+            /* Chessboard pattern to show transparency clearly */
+            background-image: 
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        [data-theme="dark"] .canvas-wrapper {
+            background-image: 
+                linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        #image-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+
+        #draw-canvas {
+            position: absolute;
+            cursor: crosshair;
+            touch-action: none; /* Very important for mobile drawing */
+        }
+
+        .instruction-box {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Freehand Crop (Lasso Tool)</h1>
+            <p>Draw around any object to cut it out perfectly. The ultimate custom shape cropper.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">✂️</div>
+                    <h3>Upload Image to Crop</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="image-canvas"></canvas>
+                    <canvas id="draw-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="instruction-box" id="instruction-text">
+                        <strong>✍️ How to use:</strong> Click and drag your mouse (or finger) to draw a continuous line around the object you want to keep. Connect the line back to the start!
+                    </div>
+
+                    <div class="control-group" style="margin-top: 20px;">
+                        <h3 style="color: var(--text-main); margin-bottom: 10px;">Options</h3>
+                        <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; color: var(--text-main); cursor: pointer;">
+                            <input type="checkbox" id="auto-trim-checkbox" checked style="width: 18px; height: 18px;">
+                            Auto-Trim Transparent Edges
+                        </label>
+                        <small style="color: var(--text-light); margin-left: 26px; display: block;">Removes extra empty space after cropping.</small>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button class="secondary-btn" id="reset-btn" style="margin-bottom: 10px;">↺ Reset Drawing</button>
+                        <button class="primary-btn" id="download-btn" style="background: #10b981; display: none;">⬇️ Download Cutout (PNG)</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="margin-top: 10px;">+ Upload New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image first.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>What is Freehand Cropping?</h2>
+            <ul>
+                <li><strong>Ultimate Control:</strong> Unlike square or circle crops, the Freehand (Lasso) tool lets you trace the exact outline of a person, car, pet, or product.</li>
+                <li><strong>Transparent Backgrounds:</strong> Everything outside your drawn line becomes transparent. The image downloads as a high-quality PNG to preserve this transparency.</li>
+                <li><strong>Auto-Trim Magic:</strong> Our smart algorithm detects the exact size of your cut-out object and automatically shrinks the canvas to fit it perfectly, removing useless empty space.</li>
+                <li><strong>100% Secure & Fast:</strong> All the heavy graphic processing is done via HTML5 Canvas directly in your web browser. Zero server uploads!</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const imgCanvas = document.getElementById('image-canvas');
+        const drawCanvas = document.getElementById('draw-canvas');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const resetBtn = document.getElementById('reset-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const instructionText = document.getElementById('instruction-text');
+        const autoTrimCheckbox = document.getElementById('auto-trim-checkbox');
+
+        const imgCtx = imgCanvas.getContext('2d');
+        const drawCtx = drawCanvas.getContext('2d');
+
+        // State variables
+        let currentImg = null;
+        let isDrawing = false;
+        let points = []; // Store drawn coordinates
+        let hasCropped = false;
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        setupCanvases();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        function setupCanvases() {
+            // UI Update
+            dropContent.style.display = 'none';
+            statusBox.style.display = 'none';
+            canvasContainer.style.display = 'flex';
+            editingTools.style.display = 'block';
+            downloadBtn.style.display = 'none';
+            instructionText.innerHTML = "<strong>✍️ How to use:</strong> Click and drag to draw a line around the object. Connect it back to the start!";
+            hasCropped = false;
+
+            // Display Scaling Math (To fit in UI while keeping original resolution internally)
+            const maxWidth = document.getElementById('drop-zone').clientWidth - 40;
+            const maxHeight = 500;
+            let ratio = Math.min(maxWidth / currentImg.width, maxHeight / currentImg.height);
+            if (ratio > 1) ratio = 1;
+
+            const displayWidth = currentImg.width * ratio;
+            const displayHeight = currentImg.height * ratio;
+
+            // Set actual internal dimensions
+            imgCanvas.width = currentImg.width;
+            imgCanvas.height = currentImg.height;
+            drawCanvas.width = currentImg.width;
+            drawCanvas.height = currentImg.height;
+
+            // Set CSS display dimensions to overlay them perfectly
+            imgCanvas.style.width = `${displayWidth}px`;
+            imgCanvas.style.height = `${displayHeight}px`;
+            drawCanvas.style.width = `${displayWidth}px`;
+            drawCanvas.style.height = `${displayHeight}px`;
+
+            // Draw Original Image
+            imgCtx.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
+            imgCtx.drawImage(currentImg, 0, 0);
+
+            // Clear Draw Canvas
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            points = [];
+        }
+
+        // 2. Drawing Logic (Lasso)
+        function getMousePos(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            // Calculate scale because canvas internal size != CSS size
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            // Mobile touch support
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function startDrawing(e) {
+            if (hasCropped) return;
+            e.preventDefault();
+            isDrawing = true;
+            points = []; // Reset points for new shape
+            const pos = getMousePos(e);
+            points.push(pos);
+
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height); // clear previous failed attempts
+            drawCtx.beginPath();
+            drawCtx.moveTo(pos.x, pos.y);
+            
+            // Brush style for the lasso line
+            drawCtx.lineWidth = 3;
+            drawCtx.lineJoin = 'round';
+            drawCtx.lineCap = 'round';
+            drawCtx.strokeStyle = '#3b82f6'; // Primary blue
+            drawCtx.setLineDash([5, 5]); // Dashed line effect
+        }
+
+        function draw(e) {
+            if (!isDrawing || hasCropped) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            points.push(pos);
+
+            drawCtx.lineTo(pos.x, pos.y);
+            drawCtx.stroke();
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing || hasCropped) return;
+            e.preventDefault();
+            isDrawing = false;
+            
+            if (points.length > 10) { // Ensure they actually drew something
+                drawCtx.closePath();
+                drawCtx.stroke();
+                
+                // Add a slight green fill to show selected area
+                drawCtx.fillStyle = 'rgba(16, 185, 129, 0.2)'; 
+                drawCtx.fill();
+
+                setTimeout(() => performCrop(), 300); // 300ms delay so user sees their selection
+            } else {
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            }
+        }
+
+        // Mouse Events
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', draw);
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch Events
+        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        drawCanvas.addEventListener('touchmove', draw, {passive: false});
+        drawCanvas.addEventListener('touchend', stopDrawing);
+
+        // 3. The Crop Magic!
+        function performCrop() {
+            hasCropped = true;
+
+            // Create a clipping path on the main image canvas
+            imgCtx.save();
+            imgCtx.clearRect(0, 0, imgCanvas.width, imgCanvas.height); // clear all
+            
+            imgCtx.beginPath();
+            imgCtx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                imgCtx.lineTo(points[i].x, points[i].y);
+            }
+            imgCtx.closePath();
+            imgCtx.clip(); // Mask applied!
+
+            // Draw image inside mask
+            imgCtx.drawImage(currentImg, 0, 0);
+            imgCtx.restore();
+
+            // Clear the blue dashed line
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+            // AUTO TRIM MAGIC (Optional based on checkbox)
+            if (autoTrimCheckbox.checked) {
+                trimCanvas();
+            }
+
+            instructionText.innerHTML = "<strong>✅ Success!</strong> Object cropped successfully. You can now download it as a transparent PNG.";
+            instructionText.style.borderLeftColor = "#10b981"; // Green border
+            downloadBtn.style.display = 'block';
+        }
+
+        // Feature: Auto Trim Bounding Box
+        function trimCanvas() {
+            // Find min and max X, Y from the drawn points
+            let minX = imgCanvas.width, minY = imgCanvas.height, maxX = 0, maxY = 0;
+            
+            points.forEach(p => {
+                if(p.x < minX) minX = p.x;
+                if(p.y < minY) minY = p.y;
+                if(p.x > maxX) maxX = p.x;
+                if(p.y > maxY) maxY = p.y;
+            });
+
+            // Add a 10px padding around the crop
+            minX = Math.max(0, minX - 10);
+            minY = Math.max(0, minY - 10);
+            maxX = Math.min(imgCanvas.width, maxX + 10);
+            maxY = Math.min(imgCanvas.height, maxY + 10);
+
+            const trimWidth = maxX - minX;
+            const trimHeight = maxY - minY;
+
+            // Create a temporary canvas to hold the trimmed image
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = trimWidth;
+            tempCanvas.height = trimHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Draw only the cropped portion
+            tempCtx.drawImage(imgCanvas, minX, minY, trimWidth, trimHeight, 0, 0, trimWidth, trimHeight);
+
+            // Resize main canvas and put the trimmed image back
+            imgCanvas.width = trimWidth;
+            imgCanvas.height = trimHeight;
+            imgCtx.drawImage(tempCanvas, 0, 0);
+
+            // Adjust CSS display width so it doesn't look stretched
+            imgCanvas.style.width = 'auto';
+            imgCanvas.style.height = 'auto';
+            imgCanvas.style.maxHeight = '500px';
+        }
+
+        // Reset Logic
+        resetBtn.addEventListener('click', () => {
+            setupCanvases();
+            instructionText.style.borderLeftColor = "var(--primary-color)";
+        });
+
+        // 4. Download
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `A7-V7-Cutout-${Date.now()}.png`; // PNG preserves the transparent background!
+            link.href = imgCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        });
+    </script>
+</body>
+</html>

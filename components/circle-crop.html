@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Crop & Profile Pic Maker - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            overflow: hidden;
+            /* Transparent Checkered Background */
+            background-image: 
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        [data-theme="dark"] .canvas-wrapper {
+            background-image: 
+                linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        #crop-canvas {
+            cursor: grab;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            background: #fff;
+            max-width: 100%;
+            height: auto;
+        }
+        #crop-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Frame Style Selector */
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .style-btn {
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .style-btn.active {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Circle Crop & Profile Frame</h1>
+            <p>Create the perfect round profile picture for Instagram, WhatsApp, or LinkedIn with custom borders.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">⭕</div>
+                    <h3>Upload Image to Circle Crop</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="crop-canvas" width="450" height="450"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="control-group">
+                        <h3 style="color: var(--text-main); margin-bottom: 15px;">1. Adjust Photo</h3>
+                        <small style="color: var(--text-light); display: block; margin-bottom: 15px;">
+                            <strong>Tip:</strong> You can click and drag the photo directly on the canvas to move it!
+                        </small>
+                        
+                        <div class="slider-header"><label>Zoom In/Out</label></div>
+                        <input type="range" min="0.1" max="3" step="0.05" value="1" class="modern-slider" id="scale-slider">
+                    </div>
+
+                    <div class="control-group" style="margin-top: 30px;">
+                        <h3 style="color: var(--text-main); margin-bottom: 5px;">2. Choose Border Design</h3>
+                        
+                        <div class="style-grid">
+                            <button class="style-btn active" data-style="none">🚫 No Border</button>
+                            <button class="style-btn" data-style="solid">🟦 Solid Blue</button>
+                            <button class="style-btn" data-style="gradient">✨ Insta Gradient</button>
+                            <button class="style-btn" data-style="dashed">➖ Dashed Pro</button>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 35px;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981;">⬇️ Download PNG (Transparent)</button>
+                        <button class="secondary-btn" onclick="location.reload()" style="margin-top: 10px;">+ Try New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image first.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Perfect Round Photos in Seconds</h2>
+            <ul>
+                <li><strong>Interactive Adjustments:</strong> Don't struggle with sliders! Just click and drag your photo inside the circle to get the perfect face framing.</li>
+                <li><strong>Custom Aesthetic Borders:</strong> Stand out on social media. Apply premium borders like an Instagram-style gradient ring or a professional solid frame.</li>
+                <li><strong>True Transparent PNG:</strong> The area outside the circle is completely removed. When you download, the corners remain 100% transparent.</li>
+                <li><strong>High Quality Export:</strong> Your photo retains its high resolution without getting blurry. All processing is done securely on your device.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('crop-canvas');
+        const ctx = canvas.getContext('2d');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const scaleSlider = document.getElementById('scale-slider');
+        const downloadBtn = document.getElementById('download-btn');
+        const styleBtns = document.querySelectorAll('.style-btn');
+
+        // State variables
+        let currentImg = null;
+        let imgScale = 1;
+        let imgX = 0;
+        let imgY = 0;
+        let currentStyle = 'none';
+
+        // Dragging State
+        let isDragging = false;
+        let startX, startY;
+
+        // Canvas Setup Configuration
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 180; // Size of the crop circle
+
+        // 1. Upload Base Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImg = new Image();
+                    currentImg.onload = () => {
+                        // Initialize scale to fit image roughly inside circle
+                        const minDim = Math.min(currentImg.width, currentImg.height);
+                        imgScale = (radius * 2.2) / minDim;
+                        scaleSlider.value = imgScale;
+
+                        // Center the image initially
+                        imgX = centerX - (currentImg.width * imgScale) / 2;
+                        imgY = centerY - (currentImg.height * imgScale) / 2;
+
+                        // Show UI
+                        dropContent.style.display = 'none';
+                        statusBox.style.display = 'none';
+                        canvasContainer.style.display = 'flex';
+                        editingTools.style.display = 'block';
+                        
+                        renderPreview();
+                    };
+                    currentImg.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 2. Adjustments (Zoom & Styles)
+        scaleSlider.addEventListener('input', (e) => {
+            // Keep the zoom centered based on current position
+            const oldScale = imgScale;
+            imgScale = parseFloat(e.target.value);
+            
+            // Math to keep center point stable while zooming
+            const scaleRatio = imgScale / oldScale;
+            imgX = centerX - (centerX - imgX) * scaleRatio;
+            imgY = centerY - (centerY - imgY) * scaleRatio;
+            
+            renderPreview();
+        });
+
+        styleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                styleBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStyle = btn.getAttribute('data-style');
+                renderPreview();
+            });
+        });
+
+        // 3. Mouse/Touch Dragging Logic (The Pro Feature)
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        const startDrag = (e) => {
+            if (!currentImg) return;
+            e.preventDefault();
+            isDragging = true;
+            const pos = getMousePos(e);
+            startX = pos.x - imgX;
+            startY = pos.y - imgY;
+        };
+
+        const onDrag = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            imgX = pos.x - startX;
+            imgY = pos.y - startY;
+            renderPreview();
+        };
+
+        const stopDrag = () => { isDragging = false; };
+
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopDrag);
+
+        canvas.addEventListener('touchstart', startDrag, {passive: false});
+        canvas.addEventListener('touchmove', onDrag, {passive: false});
+        window.addEventListener('touchend', stopDrag);
+
+        // 4. Core Rendering Logic (Preview Mode)
+        function renderPreview() {
+            if (!currentImg) return;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw checkered background inside canvas to show transparent areas
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the actual image
+            const w = currentImg.width * imgScale;
+            const h = currentImg.height * imgScale;
+            ctx.drawImage(currentImg, imgX, imgY, w, h);
+
+            // Draw Dark Overlay with a Transparent Hole
+            // This shows the user what will be cut off!
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.beginPath();
+            ctx.rect(0, 0, canvas.width, canvas.height); // Outer rect
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true); // Inner hole (drawn counter-clockwise)
+            ctx.fill();
+
+            // Draw the selected Border/Frame over the hole
+            drawBorder(ctx, centerX, centerY, radius);
+        }
+
+        function drawBorder(context, x, y, r) {
+            context.beginPath();
+            context.arc(x, y, r, 0, Math.PI * 2);
+            
+            if (currentStyle === 'solid') {
+                context.strokeStyle = '#2563eb'; // Blue
+                context.lineWidth = 12;
+                context.stroke();
+            } 
+            else if (currentStyle === 'gradient') {
+                // Instagram style gradient
+                const grad = context.createLinearGradient(x - r, y + r, x + r, y - r);
+                grad.addColorStop(0, '#f9ce34');
+                grad.addColorStop(0.5, '#ee2a7b');
+                grad.addColorStop(1, '#6228d7');
+                context.strokeStyle = grad;
+                context.lineWidth = 14;
+                context.stroke();
+            }
+            else if (currentStyle === 'dashed') {
+                context.strokeStyle = '#475569';
+                context.lineWidth = 8;
+                context.setLineDash([15, 15]);
+                context.stroke();
+                context.setLineDash([]); // Reset
+            }
+        }
+
+        // 5. Download Logic (Actual Crop)
+        downloadBtn.addEventListener('click', () => {
+            // Create a temporary canvas specifically for the final cropped image
+            const exportCanvas = document.createElement('canvas');
+            const exportSize = radius * 2; // Exact size of the circle
+            exportCanvas.width = exportSize;
+            exportCanvas.height = exportSize;
+            const exportCtx = exportCanvas.getContext('2d');
+
+            // 1. Clip into a circle
+            exportCtx.beginPath();
+            exportCtx.arc(radius, radius, radius, 0, Math.PI * 2);
+            exportCtx.clip();
+
+            // 2. Draw the image (We must offset imgX and imgY because the export canvas is smaller)
+            const offsetX = imgX - (centerX - radius);
+            const offsetY = imgY - (centerY - radius);
+            const w = currentImg.width * imgScale;
+            const h = currentImg.height * imgScale;
+            
+            exportCtx.drawImage(currentImg, offsetX, offsetY, w, h);
+
+            // 3. Draw Border if selected
+            drawBorder(exportCtx, radius, radius, radius);
+
+            // 4. Download as PNG
+            const link = document.createElement('a');
+            link.download = `A7-V7-Profile-Pic.png`;
+            link.href = exportCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        });
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

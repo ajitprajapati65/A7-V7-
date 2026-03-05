@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Multiple Images Online - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+            overflow: auto; /* Allow scrolling if image is too big */
+            min-height: 300px;
+            background-image: 
+                linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+                linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        [data-theme="dark"] .canvas-wrapper {
+            background-image: 
+                linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+        }
+
+        #result-canvas {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        /* Thumbnails & Reordering UI */
+        .thumbnail-container {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.03);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 90px;
+            align-items: center;
+        }
+        [data-theme="dark"] .thumbnail-container { background: rgba(255,255,255,0.03); }
+        
+        .thumb-box {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            cursor: grab;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .thumb-box:active { cursor: grabbing; transform: scale(1.05); }
+        .thumb-box.drag-over { border-color: var(--primary-color); transform: scale(1.1); }
+        
+        .thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-thumb {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .remove-thumb:hover { background: red; }
+
+        /* Custom Radio Buttons for Layout */
+        .layout-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .layout-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .layout-btn.active {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .color-picker {
+            width: 100%;
+            height: 45px;
+            padding: 2px 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Join Multiple Images</h1>
+            <p>Combine photos horizontally or vertically. Perfect for Before/After posts or collages.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" style="position: relative; flex: 1.5; display: flex; flex-direction: column;">
+                
+                <div style="padding: 0 20px;">
+                    <h4 style="color: var(--text-main); margin-bottom: 10px; font-size: 0.9rem;">
+                        Loaded Images <small style="color: var(--text-light); font-weight: normal;">(Drag to reorder)</small>
+                    </h4>
+                    <div class="thumbnail-container" id="thumb-container">
+                        <div style="color: var(--text-light); font-size: 0.9rem; margin: auto;" id="empty-thumb-msg">No images uploaded yet.</div>
+                    </div>
+                </div>
+
+                <div class="canvas-wrapper" id="canvas-container" style="flex: 1; margin: 0 20px 20px 20px;">
+                    <canvas id="result-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <input type="file" id="file-input" accept="image/*" multiple hidden>
+                <button class="primary-btn" id="browse-btn" style="width: 100%; margin-bottom: 25px;">➕ Select Images (Add More)</button>
+
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <h3 style="color: var(--text-main); margin-bottom: 10px;">Layout Direction</h3>
+                    <div class="layout-options">
+                        <button class="layout-btn active" data-layout="horizontal">↔️ Horizontal (Row)</button>
+                        <button class="layout-btn" data-layout="vertical">↕️ Vertical (Col)</button>
+                    </div>
+
+                    <div class="control-group" style="margin-bottom: 20px;">
+                        <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; color: var(--text-main); cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" id="auto-scale-cb" checked style="width: 18px; height: 18px;">
+                            Auto-Match Sizes 
+                        </label>
+                        <small style="color: var(--text-light); display: block; margin-left: 26px; margin-top: 5px;">
+                            Smartly resizes photos so they fit together perfectly without uneven edges.
+                        </small>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="slider-header"><label>Gap Between Images <span id="gap-val">(10px)</span></label></div>
+                        <input type="range" min="0" max="100" value="10" class="modern-slider" id="gap-slider">
+                        
+                        <div class="slider-header" style="margin-top: 15px;"><label>Outer Padding <span id="pad-val">(20px)</span></label></div>
+                        <input type="range" min="0" max="100" value="20" class="modern-slider" id="pad-slider">
+                        
+                        <div style="margin-top: 15px;">
+                            <label style="color: var(--text-main); font-weight: 500; font-size: 0.9rem; margin-bottom: 5px; display: block;">Background Color</label>
+                            <input type="color" id="bg-color" class="color-picker" value="#ffffff">
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981; width: 100%;">⬇️ Download Joined Image</button>
+                        <button class="secondary-btn" id="clear-all-btn" style="width: 100%; border-color: #ef4444; color: #ef4444; margin-top: 10px;">🗑️ Clear All Images</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload at least 2 images.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Use Our Image Joiner?</h2>
+            <ul>
+                <li><strong>Auto-Match Magic:</strong> Uploaded images of different sizes? No problem! Our smart algorithm auto-scales them to perfectly match heights (for horizontal) or widths (for vertical) so the final image looks flawless.</li>
+                <li><strong>Drag & Drop Sequence:</strong> Want to swap the Before and After photos? Just drag and drop the small thumbnails to rearrange them instantly.</li>
+                <li><strong>Unlimited Combos:</strong> Join 2, 5, or even 10 images at once. Create long scrolling strips or wide panorama-style collages.</li>
+                <li><strong>High Quality Export:</strong> Processed locally on your device ensuring zero loss in quality and 100% privacy for your personal photos.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const canvas = document.getElementById('result-canvas');
+        const ctx = canvas.getContext('2d');
+        const thumbContainer = document.getElementById('thumb-container');
+        const emptyThumbMsg = document.getElementById('empty-thumb-msg');
+
+        // Controls
+        const layoutBtns = document.querySelectorAll('.layout-btn');
+        const gapSlider = document.getElementById('gap-slider');
+        const padSlider = document.getElementById('pad-slider');
+        const bgColorPicker = document.getElementById('bg-color');
+        const autoScaleCb = document.getElementById('auto-scale-cb');
+        const gapVal = document.getElementById('gap-val');
+        const padVal = document.getElementById('pad-val');
+        const downloadBtn = document.getElementById('download-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+
+        // State Variables
+        let imagesArray = []; // Store image objects
+        let currentLayout = 'horizontal'; // 'horizontal' or 'vertical'
+        let draggedItemIndex = null;
+
+        // 1. Handle File Uploads (Multiple)
+        browseBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                // Loop through all selected files
+                Array.from(this.files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                // Add to our array
+                                imagesArray.push({
+                                    id: Date.now() + Math.random(),
+                                    img: img,
+                                    src: e.target.result
+                                });
+                                updateUI();
+                            };
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                // Reset input so same files can be selected again if needed
+                this.value = ''; 
+            }
+        });
+
+        // 2. Control Event Listeners
+        layoutBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                layoutBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentLayout = btn.getAttribute('data-layout');
+                renderCanvas();
+            });
+        });
+
+        gapSlider.addEventListener('input', (e) => { gapVal.innerText = `(${e.target.value}px)`; renderCanvas(); });
+        padSlider.addEventListener('input', (e) => { padVal.innerText = `(${e.target.value}px)`; renderCanvas(); });
+        bgColorPicker.addEventListener('input', renderCanvas);
+        autoScaleCb.addEventListener('change', renderCanvas);
+
+        clearAllBtn.addEventListener('click', () => {
+            imagesArray = [];
+            updateUI();
+        });
+
+        // 3. Update UI & Thumbnails
+        function updateUI() {
+            // Manage Visibility
+            if (imagesArray.length > 0) {
+                emptyThumbMsg.style.display = 'none';
+                editingTools.style.display = 'block';
+                statusBox.style.display = 'none';
+            } else {
+                emptyThumbMsg.style.display = 'block';
+                editingTools.style.display = 'none';
+                statusBox.style.display = 'block';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.width = 0; canvas.height = 0;
+            }
+
+            renderThumbnails();
+            renderCanvas();
+        }
+
+        // 4. Render Thumbnails (With Drag & Drop Logic)
+        function renderThumbnails() {
+            // Remove all existing thumbs (keep empty msg if needed)
+            const thumbs = thumbContainer.querySelectorAll('.thumb-box');
+            thumbs.forEach(t => t.remove());
+
+            imagesArray.forEach((item, index) => {
+                const box = document.createElement('div');
+                box.className = 'thumb-box';
+                box.draggable = true;
+                box.dataset.index = index;
+
+                const img = document.createElement('img');
+                img.src = item.src;
+                img.className = 'thumb-img';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'remove-thumb';
+                closeBtn.innerHTML = '✖';
+                closeBtn.onclick = () => {
+                    imagesArray.splice(index, 1);
+                    updateUI();
+                };
+
+                box.appendChild(img);
+                box.appendChild(closeBtn);
+
+                // Drag Events
+                box.addEventListener('dragstart', (e) => {
+                    draggedItemIndex = index;
+                    setTimeout(() => box.style.opacity = '0.5', 0);
+                });
+                
+                box.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    box.classList.add('drag-over');
+                });
+                
+                box.addEventListener('dragleave', () => {
+                    box.classList.remove('drag-over');
+                });
+                
+                box.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    box.classList.remove('drag-over');
+                    const targetIndex = index;
+                    if (draggedItemIndex !== null && draggedItemIndex !== targetIndex) {
+                        // Swap elements in array
+                        const draggedItem = imagesArray.splice(draggedItemIndex, 1)[0];
+                        imagesArray.splice(targetIndex, 0, draggedItem);
+                        updateUI();
+                    }
+                });
+                
+                box.addEventListener('dragend', () => {
+                    box.style.opacity = '1';
+                    draggedItemIndex = null;
+                });
+
+                thumbContainer.appendChild(box);
+            });
+        }
+
+        // 5. Core Canvas Render (The Magic Joining Logic)
+        function renderCanvas() {
+            if (imagesArray.length === 0) return;
+
+            const gap = parseInt(gapSlider.value);
+            const pad = parseInt(padSlider.value);
+            const bgColor = bgColorPicker.value;
+            const autoScale = autoScaleCb.checked;
+
+            let totalW = 0;
+            let totalH = 0;
+            let renderedImages = [];
+
+            // Calculate Dimensions
+            if (currentLayout === 'horizontal') {
+                // Find target height (minimum height among all images for best quality)
+                let targetHeight = Math.min(...imagesArray.map(item => item.img.height));
+                
+                imagesArray.forEach((item) => {
+                    let w, h;
+                    if (autoScale) {
+                        const ratio = targetHeight / item.img.height;
+                        h = targetHeight;
+                        w = item.img.width * ratio;
+                    } else {
+                        w = item.img.width;
+                        h = item.img.height;
+                        if (h > targetHeight) targetHeight = h; // update max height needed
+                    }
+                    renderedImages.push({ img: item.img, w: w, h: h });
+                    totalW += w;
+                });
+                totalW += (imagesArray.length - 1) * gap;
+                totalH = autoScale ? targetHeight : targetHeight; // Max height used if not auto-scaling
+
+            } else {
+                // Vertical Layout
+                // Find target width (minimum width among all images)
+                let targetWidth = Math.min(...imagesArray.map(item => item.img.width));
+                
+                imagesArray.forEach((item) => {
+                    let w, h;
+                    if (autoScale) {
+                        const ratio = targetWidth / item.img.width;
+                        w = targetWidth;
+                        h = item.img.height * ratio;
+                    } else {
+                        w = item.img.width;
+                        h = item.img.height;
+                        if (w > targetWidth) targetWidth = w; // update max width needed
+                    }
+                    renderedImages.push({ img: item.img, w: w, h: h });
+                    totalH += h;
+                });
+                totalH += (imagesArray.length - 1) * gap;
+                totalW = autoScale ? targetWidth : targetWidth;
+            }
+
+            // Set Canvas Size (including padding)
+            canvas.width = totalW + (pad * 2);
+            canvas.height = totalH + (pad * 2);
+
+            // Draw Background
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Images
+            let currentX = pad;
+            let currentY = pad;
+
+            renderedImages.forEach((item) => {
+                if (currentLayout === 'horizontal') {
+                    // Center vertically if not auto-scaled
+                    const yOffset = autoScale ? 0 : (totalH - item.h) / 2;
+                    ctx.drawImage(item.img, currentX, currentY + yOffset, item.w, item.h);
+                    currentX += item.w + gap;
+                } else {
+                    // Center horizontally if not auto-scaled
+                    const xOffset = autoScale ? 0 : (totalW - item.w) / 2;
+                    ctx.drawImage(item.img, currentX + xOffset, currentY, item.w, item.h);
+                    currentY += item.h + gap;
+                }
+            });
+        }
+
+        // 6. Download Joined Image
+        downloadBtn.addEventListener('click', () => {
+            if (imagesArray.length === 0) {
+                alert("Please add some images first!");
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = `A7-V7-Joined-${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+    </script>
+</body>
+</html>

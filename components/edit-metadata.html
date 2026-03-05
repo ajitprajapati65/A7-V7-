@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Image Metadata (EXIF) - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.js"></script>
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+        }
+        #preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        /* Tabs UI */
+        .tab-container {
+            display: flex;
+            background: var(--border-color);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Data Display & Form */
+        .data-panel {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        [data-theme="dark"] .data-panel { background: rgba(255,255,255,0.02); }
+
+        .metadata-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        .metadata-row:last-child { border-bottom: none; }
+        .meta-key { color: var(--text-light); font-weight: 600; }
+        .meta-val { color: var(--text-main); font-family: monospace; text-align: right; word-break: break-all; max-width: 60%; }
+
+        .modern-input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        .privacy-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .privacy-btn:hover { background: #dc2626; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        #toast.show { opacity: 1; visibility: visible; bottom: 40px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Edit Image Metadata (EXIF)</h1>
+            <p>View hidden photo details, edit camera info, or strip all metadata to protect your privacy.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.2;">
+                <input type="file" id="file-input" accept="image/jpeg, image/jpg" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🕵️‍♂️</div>
+                    <h3>Upload JPG Image</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                    <small style="display: block; margin-top: 15px; color: var(--text-light);">*EXIF data is primarily supported in JPG/JPEG formats.</small>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <img id="preview-img" src="" alt="Preview">
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1.5;">
+                
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="tab-container">
+                        <button class="tab-btn active" id="tab-view">👁️ View Hidden Data</button>
+                        <button class="tab-btn" id="tab-edit">✏️ Edit Metadata</button>
+                    </div>
+
+                    <div id="view-panel" class="data-panel">
+                        <div id="exif-list">
+                            </div>
+                        <div id="no-exif-msg" style="text-align: center; color: var(--text-light); padding: 20px; display: none;">
+                            No EXIF Metadata found in this image.
+                        </div>
+                    </div>
+
+                    <div id="edit-panel" class="data-panel" style="display: none;">
+                        <label class="meta-key">Camera Make</label>
+                        <input type="text" id="input-make" class="modern-input" placeholder="e.g., Apple, Canon">
+
+                        <label class="meta-key">Camera Model</label>
+                        <input type="text" id="input-model" class="modern-input" placeholder="e.g., iPhone 15 Pro Max">
+
+                        <label class="meta-key">Artist / Author</label>
+                        <input type="text" id="input-artist" class="modern-input" placeholder="Your Name">
+
+                        <label class="meta-key">Copyright</label>
+                        <input type="text" id="input-copyright" class="modern-input" placeholder="© 2026 A7 V7">
+
+                        <label class="meta-key">Original Date/Time</label>
+                        <input type="text" id="input-datetime" class="modern-input" placeholder="YYYY:MM:DD HH:MM:SS">
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 25px;">
+                        
+                        <button class="privacy-btn" id="strip-btn" style="margin-bottom: 15px;">
+                            🛡️ 1-Click Privacy Shield (Wipe All Data)
+                        </button>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button class="primary-btn" id="save-btn" style="background: #10b981; flex: 1;">💾 Apply & Download</button>
+                            <button class="secondary-btn" onclick="location.reload()" style="flex: 1;">+ New Image</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload a JPEG image to read its metadata.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Edit or Remove EXIF Metadata?</h2>
+            <ul>
+                <li><strong>Privacy Protection:</strong> When you take a photo with your smartphone, it silently saves your exact GPS location, time, and phone model inside the file. Use our "Privacy Shield" to wipe this data before sharing photos online.</li>
+                <li><strong>Copyrighting:</strong> Professional photographers can inject their Artist Name and Copyright details directly into the image file so they get credit wherever the image goes.</li>
+                <li><strong>Fixing Details:</strong> Did your camera have the wrong date setting? Easily correct the 'Date Taken' field so your digital albums organize properly.</li>
+                <li><strong>100% Safe:</strong> Reading and editing metadata is done locally on your browser. Your private photos are never uploaded to any server.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast">✅ Metadata updated successfully!</div>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // UI Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const previewImg = document.getElementById('preview-img');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        
+        // Tabs & Panels
+        const tabView = document.getElementById('tab-view');
+        const tabEdit = document.getElementById('tab-edit');
+        const viewPanel = document.getElementById('view-panel');
+        const editPanel = document.getElementById('edit-panel');
+        
+        // Data Elements
+        const exifList = document.getElementById('exif-list');
+        const noExifMsg = document.getElementById('no-exif-msg');
+        
+        // Inputs
+        const inMake = document.getElementById('input-make');
+        const inModel = document.getElementById('input-model');
+        const inArtist = document.getElementById('input-artist');
+        const inCopyright = document.getElementById('input-copyright');
+        const inDateTime = document.getElementById('input-datetime');
+
+        // Buttons
+        const stripBtn = document.getElementById('strip-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const toast = document.getElementById('toast');
+
+        // State Variables
+        let originalBase64 = "";
+        let currentExifObj = null;
+
+        // 1. Upload & Read Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                
+                // Exif mainly works on JPEGs
+                if (file.type !== "image/jpeg" && file.type !== "image/jpg") {
+                    alert("Please upload a JPG/JPEG image. PNGs and WebPs do not standardly support EXIF data.");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalBase64 = e.target.result;
+                    previewImg.src = originalBase64;
+                    
+                    // UI Setup
+                    dropContent.style.display = 'none';
+                    statusBox.style.display = 'none';
+                    canvasContainer.style.display = 'flex';
+                    editingTools.style.display = 'block';
+                    
+                    extractExif(originalBase64);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. Tab Switching Logic
+        tabView.addEventListener('click', () => {
+            tabView.classList.add('active'); tabEdit.classList.remove('active');
+            viewPanel.style.display = 'block'; editPanel.style.display = 'none';
+        });
+
+        tabEdit.addEventListener('click', () => {
+            tabEdit.classList.add('active'); tabView.classList.remove('active');
+            editPanel.style.display = 'block'; viewPanel.style.display = 'none';
+        });
+
+        // 3. Extract & Display EXIF Data using PiExifJS
+        function extractExif(base64Data) {
+            exifList.innerHTML = '';
+            
+            try {
+                currentExifObj = piexif.load(base64Data);
+                let hasData = false;
+
+                // Function to add a row to the UI
+                const addRow = (key, val) => {
+                    if(val === undefined || val === null || val === "") return;
+                    hasData = true;
+                    exifList.innerHTML += `
+                        <div class="metadata-row">
+                            <span class="meta-key">${key}</span>
+                            <span class="meta-val">${val}</span>
+                        </div>
+                    `;
+                };
+
+                // Read 0th IFD (Main Image Data)
+                const ifd0 = currentExifObj["0th"];
+                if (ifd0) {
+                    addRow("Camera Make", ifd0[piexif.ImageIFD.Make]);
+                    addRow("Camera Model", ifd0[piexif.ImageIFD.Model]);
+                    addRow("Software", ifd0[piexif.ImageIFD.Software]);
+                    addRow("Date Modified", ifd0[piexif.ImageIFD.DateTime]);
+                    addRow("Artist", ifd0[piexif.ImageIFD.Artist]);
+                    addRow("Copyright", ifd0[piexif.ImageIFD.Copyright]);
+                }
+
+                // Read Exif IFD (Photo specific data)
+                const exifIfd = currentExifObj["Exif"];
+                if (exifIfd) {
+                    addRow("Original Date/Time", exifIfd[piexif.ExifIFD.DateTimeOriginal]);
+                    
+                    // Convert Array resolutions to readable format if they exist
+                    if(exifIfd[piexif.ExifIFD.PixelXDimension]) {
+                        addRow("Resolution", `${exifIfd[piexif.ExifIFD.PixelXDimension]} x ${exifIfd[piexif.ExifIFD.PixelYDimension]}`);
+                    }
+                    if(exifIfd[piexif.ExifIFD.ISOSpeedRatings]) addRow("ISO", exifIfd[piexif.ExifIFD.ISOSpeedRatings]);
+                }
+
+                // Read GPS IFD (Location)
+                const gpsIfd = currentExifObj["GPS"];
+                if (gpsIfd && Object.keys(gpsIfd).length > 0) {
+                    addRow("GPS Data", "Present (Location Saved) 📍");
+                }
+
+                // Populate Edit Fields with existing data
+                inMake.value = ifd0[piexif.ImageIFD.Make] || "";
+                inModel.value = ifd0[piexif.ImageIFD.Model] || "";
+                inArtist.value = ifd0[piexif.ImageIFD.Artist] || "";
+                inCopyright.value = ifd0[piexif.ImageIFD.Copyright] || "";
+                inDateTime.value = (exifIfd && exifIfd[piexif.ExifIFD.DateTimeOriginal]) ? exifIfd[piexif.ExifIFD.DateTimeOriginal] : "";
+
+                if (!hasData) {
+                    noExifMsg.style.display = 'block';
+                } else {
+                    noExifMsg.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error("EXIF parsing error:", error);
+                noExifMsg.innerText = "Error reading metadata or file is corrupted.";
+                noExifMsg.style.display = 'block';
+            }
+        }
+
+        // 4. Strip Metadata (Privacy Shield)
+        stripBtn.addEventListener('click', () => {
+            try {
+                // piexif.remove completely strips all EXIF data from the base64 string
+                const cleanBase64 = piexif.remove(originalBase64);
+                downloadImage(cleanBase64, "A7-V7-Privacy-Cleaned.jpg");
+                showToast("🛡️ All Metadata Stripped & Downloaded!");
+                
+                // Update UI to show it's clean
+                originalBase64 = cleanBase64;
+                extractExif(cleanBase64);
+            } catch(e) {
+                alert("Error stripping metadata.");
+                console.error(e);
+            }
+        });
+
+        // 5. Save Custom Metadata
+        saveBtn.addEventListener('click', () => {
+            try {
+                // Update currentExifObj with input values
+                currentExifObj["0th"][piexif.ImageIFD.Make] = inMake.value;
+                currentExifObj["0th"][piexif.ImageIFD.Model] = inModel.value;
+                currentExifObj["0th"][piexif.ImageIFD.Artist] = inArtist.value;
+                currentExifObj["0th"][piexif.ImageIFD.Copyright] = inCopyright.value;
+                
+                // Initialize Exif object if it doesn't exist
+                if(!currentExifObj["Exif"]) currentExifObj["Exif"] = {};
+                currentExifObj["Exif"][piexif.ExifIFD.DateTimeOriginal] = inDateTime.value;
+
+                // Dump new EXIF object into a binary string
+                const exifBytes = piexif.dump(currentExifObj);
+                
+                // Insert new EXIF bytes into the original image
+                const newDataUrl = piexif.insert(exifBytes, originalBase64);
+                
+                downloadImage(newDataUrl, "A7-V7-Metadata-Edited.jpg");
+                showToast("✅ Custom Metadata Saved!");
+                
+                // Update UI
+                originalBase64 = newDataUrl;
+                extractExif(newDataUrl);
+                
+                // Switch to view tab to see changes
+                tabView.click();
+
+            } catch(e) {
+                alert("Error saving metadata. Check if Date format is correct (YYYY:MM:DD HH:MM:SS)");
+                console.error(e);
+            }
+        });
+
+        // Utilities
+        function downloadImage(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataUrl;
+            link.click();
+        }
+
+        function showToast(msg) {
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>

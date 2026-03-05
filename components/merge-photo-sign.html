@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Photo & Signature - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+        }
+        #result-canvas {
+            background-color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            cursor: grab;
+        }
+        #result-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Dual Upload Buttons */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-color);
+        }
+        .upload-box:hover {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+        .upload-box h4 {
+            margin-top: 10px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+        .status-badge {
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #cbd5e1;
+            color: #334155;
+        }
+        .status-badge.loaded {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        /* Sub-sections */
+        .control-section {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        [data-theme="dark"] .control-section {
+            background: rgba(255,255,255,0.02);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Merge Photo & Signature</h1>
+            <p>Create perfectly formatted combined images for SSC, UPSC, and government exam forms.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.5;">
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <canvas id="result-canvas" width="400" height="550"></canvas>
+                </div>
+                
+                <div id="placeholder-text" style="text-align: center; color: var(--text-light); padding: 50px;">
+                    <div style="font-size: 4rem; margin-bottom: 10px;">📄</div>
+                    <h3>Waiting for uploads...</h3>
+                    <p>Please upload both Photo and Signature from the right panel.</p>
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1;">
+                
+                <h3 style="color: var(--text-main); margin-bottom: 15px;">1. Upload Files</h3>
+                
+                <input type="file" id="photo-input" accept="image/*" hidden>
+                <input type="file" id="sign-input" accept="image/*" hidden>
+
+                <div class="upload-grid">
+                    <div class="upload-box" onclick="document.getElementById('photo-input').click()">
+                        <div style="font-size: 2rem;">📸</div>
+                        <h4>Passport Photo</h4>
+                        <span class="status-badge" id="photo-status">Pending</span>
+                    </div>
+                    <div class="upload-box" onclick="document.getElementById('sign-input').click()">
+                        <div style="font-size: 2rem;">✍️</div>
+                        <h4>Signature</h4>
+                        <span class="status-badge" id="sign-status">Pending</span>
+                    </div>
+                </div>
+
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <small style="color: var(--text-light); display: block; margin-bottom: 15px;">
+                        <strong>💡 Pro Tip:</strong> Click and drag on the photo or signature directly to adjust their positions!
+                    </small>
+
+                    <div class="control-section">
+                        <h4 style="color: var(--text-main); margin-bottom: 10px;">Photo Controls</h4>
+                        <div class="slider-header"><label>Zoom Photo</label></div>
+                        <input type="range" min="0.1" max="3" step="0.05" value="1" class="modern-slider" id="photo-zoom">
+                    </div>
+
+                    <div class="control-section">
+                        <h4 style="color: var(--text-main); margin-bottom: 10px;">Signature Controls</h4>
+                        <div class="slider-header"><label>Zoom Signature</label></div>
+                        <input type="range" min="0.1" max="3" step="0.05" value="1" class="modern-slider" id="sign-zoom" style="margin-bottom: 15px;">
+                        
+                        <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; color: var(--text-main); cursor: pointer;">
+                            <input type="checkbox" id="magic-blend-checkbox" checked style="width: 18px; height: 18px;">
+                            Magic Blend (Remove Paper Background)
+                        </label>
+                    </div>
+
+                    <div class="control-section">
+                        <h4 style="color: var(--text-main); margin-bottom: 10px;">Layout Settings</h4>
+                        <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; color: var(--text-main); cursor: pointer; margin-bottom: 10px;">
+                            <input type="checkbox" id="border-checkbox" checked style="width: 18px; height: 18px;">
+                            Add Outer Border
+                        </label>
+                        <label class="checkbox-container" style="display: flex; align-items: center; gap: 8px; color: var(--text-main); cursor: pointer;">
+                            <input type="checkbox" id="separator-checkbox" checked style="width: 18px; height: 18px;">
+                            Draw Line between Photo & Sign
+                        </label>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 25px;">
+                        <button class="primary-btn" id="download-btn" style="background: #10b981; width: 100%;">⬇️ Download Form Photo</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>Why Use Our Merge Tool?</h2>
+            <ul>
+                <li><strong>Magic Signature Blend:</strong> Clicked a picture of your signature on a slightly grey or yellowish paper? Our "Magic Blend" automatically removes the paper background, keeping only your ink!</li>
+                <li><strong>Independent Controls:</strong> Zoom and move your passport photo and your signature independently. Just click on the respective section and drag it to fit perfectly.</li>
+                <li><strong>Official Standards:</strong> Outputs a perfectly proportioned image (usually required as 400x550 pixels) with optional separator lines and borders accepted by major exam portals like SSC and UPSC.</li>
+                <li><strong>100% Secure:</strong> Forms require sensitive documents. This tool works locally in your browser. Your photo and signature are NEVER sent to any server.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // Elements
+        const photoInput = document.getElementById('photo-input');
+        const signInput = document.getElementById('sign-input');
+        const photoStatus = document.getElementById('photo-status');
+        const signStatus = document.getElementById('sign-status');
+        
+        const canvasContainer = document.getElementById('canvas-container');
+        const placeholderText = document.getElementById('placeholder-text');
+        const editingTools = document.getElementById('editing-tools');
+        
+        const canvas = document.getElementById('result-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Controls
+        const photoZoom = document.getElementById('photo-zoom');
+        const signZoom = document.getElementById('sign-zoom');
+        const magicBlend = document.getElementById('magic-blend-checkbox');
+        const borderCheckbox = document.getElementById('border-checkbox');
+        const separatorCheckbox = document.getElementById('separator-checkbox');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // State Variables
+        let photoImg = null;
+        let signImg = null;
+
+        // Canvas Structure constraints (Total: 400x550)
+        const canvasW = 400;
+        const canvasH = 550;
+        const photoAreaH = 400; // Top 400px for photo
+        const signAreaH = 150;  // Bottom 150px for signature
+
+        // Transforms
+        let pScale = 1, pX = 0, pY = 0;
+        let sScale = 1, sX = 0, sY = 0;
+
+        // Dragging Logic Variables
+        let isDragging = false;
+        let dragTarget = null; // 'photo' or 'sign'
+        let startMouseX, startMouseY;
+        let startPX, startPY, startSX, startSY;
+
+        // 1. File Upload Handlers
+        photoInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    photoImg = new Image();
+                    photoImg.onload = () => {
+                        photoStatus.textContent = "✅ Loaded";
+                        photoStatus.classList.add('loaded');
+                        // Set initial scale to fit width
+                        pScale = canvasW / photoImg.width;
+                        photoZoom.value = pScale;
+                        pX = 0;
+                        pY = (photoAreaH - (photoImg.height * pScale)) / 2; // Center vertically in its area
+                        checkAndInit();
+                    };
+                    photoImg.src = event.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        signInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    signImg = new Image();
+                    signImg.onload = () => {
+                        signStatus.textContent = "✅ Loaded";
+                        signStatus.classList.add('loaded');
+                        // Set initial scale to fit width or height smoothly
+                        sScale = Math.min(canvasW / signImg.width, signAreaH / signImg.height);
+                        signZoom.value = sScale;
+                        sX = (canvasW - (signImg.width * sScale)) / 2; // Center horizontally
+                        sY = (signAreaH - (signImg.height * sScale)) / 2; // Center vertically
+                        checkAndInit();
+                    };
+                    signImg.src = event.target.result;
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        function checkAndInit() {
+            if (photoImg && signImg) {
+                placeholderText.style.display = 'none';
+                canvasContainer.style.display = 'flex';
+                editingTools.style.display = 'block';
+                renderCanvas();
+            }
+        }
+
+        // 2. Control Listeners
+        photoZoom.addEventListener('input', (e) => {
+            const oldScale = pScale;
+            pScale = parseFloat(e.target.value);
+            // Zoom towards center
+            const ratio = pScale / oldScale;
+            pX = (canvasW / 2) - ((canvasW / 2) - pX) * ratio;
+            pY = (photoAreaH / 2) - ((photoAreaH / 2) - pY) * ratio;
+            renderCanvas();
+        });
+
+        signZoom.addEventListener('input', (e) => {
+            const oldScale = sScale;
+            sScale = parseFloat(e.target.value);
+            const ratio = sScale / oldScale;
+            sX = (canvasW / 2) - ((canvasW / 2) - sX) * ratio;
+            sY = (signAreaH / 2) - ((signAreaH / 2) - sY) * ratio;
+            renderCanvas();
+        });
+
+        [magicBlend, borderCheckbox, separatorCheckbox].forEach(el => el.addEventListener('change', renderCanvas));
+
+        // 3. Mouse/Touch Dragging Logic
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        const startDrag = (e) => {
+            if (!photoImg || !signImg) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            isDragging = true;
+            startMouseX = pos.x;
+            startMouseY = pos.y;
+            startPX = pX; startPY = pY;
+            startSX = sX; startSY = sY;
+
+            // Determine which area user clicked
+            if (pos.y <= photoAreaH) {
+                dragTarget = 'photo';
+            } else {
+                dragTarget = 'sign';
+            }
+        };
+
+        const onDrag = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const dx = pos.x - startMouseX;
+            const dy = pos.y - startMouseY;
+
+            if (dragTarget === 'photo') {
+                pX = startPX + dx;
+                pY = startPY + dy;
+            } else if (dragTarget === 'sign') {
+                sX = startSX + dx;
+                sY = startSY + dy;
+            }
+            renderCanvas();
+        };
+
+        const stopDrag = () => { isDragging = false; dragTarget = null; };
+
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopDrag);
+        canvas.addEventListener('mouseout', stopDrag);
+
+        canvas.addEventListener('touchstart', startDrag, {passive: false});
+        canvas.addEventListener('touchmove', onDrag, {passive: false});
+        window.addEventListener('touchend', stopDrag);
+
+        // 4. Core Render Logic
+        function renderCanvas() {
+            if (!photoImg || !signImg) return;
+
+            // Clear & Set White Background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasW, canvasH);
+
+            // --- DRAW PHOTO ---
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, canvasW, photoAreaH);
+            ctx.clip(); // Restrict drawing to top 400px
+            ctx.drawImage(photoImg, pX, pY, photoImg.width * pScale, photoImg.height * pScale);
+            ctx.restore();
+
+            // --- DRAW SIGNATURE ---
+            ctx.save();
+            ctx.translate(0, photoAreaH); // Move drawing origin down to signature area
+            ctx.beginPath();
+            ctx.rect(0, 0, canvasW, signAreaH);
+            ctx.clip(); // Restrict to bottom 150px
+            
+            // MAGIC BLEND: This removes the white paper background from the signature!
+            if (magicBlend.checked) {
+                ctx.globalCompositeOperation = 'multiply';
+            }
+            
+            ctx.drawImage(signImg, sX, sY, signImg.width * sScale, signImg.height * sScale);
+            ctx.restore();
+
+            // --- DRAW LINES & BORDERS ---
+            ctx.strokeStyle = '#0f172a'; // Dark border
+            ctx.lineWidth = 4;
+
+            if (separatorCheckbox.checked) {
+                ctx.beginPath();
+                ctx.moveTo(0, photoAreaH);
+                ctx.lineTo(canvasW, photoAreaH);
+                ctx.stroke();
+            }
+
+            if (borderCheckbox.checked) {
+                ctx.strokeRect(0, 0, canvasW, canvasH);
+            }
+        }
+
+        // 5. Download Logic
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `A7-V7-Merged-Form-Photo.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        });
+        
+    </script>
+</body>
+</html>

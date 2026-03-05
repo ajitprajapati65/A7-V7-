@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Image Metadata & GPS - A7 V7</title>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+    <style>
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 100%;
+        }
+        #preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        /* Dashboard Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .stat-card h4 {
+            color: var(--text-light);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Map Container */
+        .map-container {
+            width: 100%;
+            height: 250px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            display: none;
+            background: #e2e8f0;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Full Data Table */
+        .data-panel {
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        [data-theme="dark"] .data-panel { background: rgba(255,255,255,0.02); }
+
+        .metadata-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        .metadata-row:last-child { border-bottom: none; }
+        .meta-key { color: var(--text-light); font-weight: 600; text-transform: capitalize; }
+        .meta-val { color: var(--text-main); font-family: monospace; text-align: right; word-break: break-all; max-width: 60%; font-weight: 500;}
+
+        .section-title {
+            color: var(--text-main);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* File Info Box */
+        .file-info-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(37, 99, 235, 0.05);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+        .file-info-text h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
+        .file-info-text p { margin: 5px 0 0 0; font-size: 0.9rem; color: var(--text-light); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="../index.html">All Tools ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../index.html#basic-editing">Basic Editing</a></li>
+                        <li><a href="../index.html#id-tools">Passport & ID Photo Sizes</a></li>
+                        <li><a href="../index.html#compression-tools">Compression</a></li>
+                        <li><a href="../index.html#special-tools">Special Effects</a></li>
+                        <li><a href="../index.html#resize-tools">Resize and Sizes</a></li>
+                        <li><a href="../index.html#quality-tools">Quality</a></li>
+                        <li><a href="../index.html#ai-tools">AI Powered Tools</a></li>
+                        <li><a href="../index.html#export-tools">Export & Format</a></li>
+                        <li><a href="../index.html#pdf-tools">Image to PDF</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="tool-main">
+        <div class="tool-header">
+            <h1>Image EXIF Viewer</h1>
+            <p>Uncover the hidden secrets of your photos. View camera stats, settings, and exact GPS locations.</p>
+        </div>
+
+        <section class="workspace">
+            
+            <div class="image-preview-area" id="drop-zone" style="position: relative; flex: 1.2;">
+                <input type="file" id="file-input" accept="image/jpeg, image/jpg, image/png, image/webp" hidden>
+                
+                <div class="drop-content" id="drop-content">
+                    <div class="upload-icon">🔍</div>
+                    <h3>Upload Image to Inspect</h3>
+                    <p style="color: #64748b; margin: 10px 0;">Drag & Drop or</p>
+                    <button class="upload-btn" id="browse-btn">Browse Files</button>
+                </div>
+            
+                <div class="canvas-wrapper" id="canvas-container" style="display: none;">
+                    <img id="preview-img" src="" alt="Preview">
+                </div>
+            </div>
+
+            <div class="controls-area" style="flex: 1.5;">
+                
+                <div id="loading-msg" style="display: none; text-align: center; color: var(--text-main); padding: 20px;">
+                    <h3>⏳ Analyzing Image Data...</h3>
+                </div>
+
+                <div id="editing-tools" style="display: none; width: 100%;">
+                    
+                    <div class="file-info-box">
+                        <div style="font-size: 2.5rem;">📸</div>
+                        <div class="file-info-text">
+                            <h3 id="ui-filename">image.jpg</h3>
+                            <p><span id="ui-filesize">2.4 MB</span> • <span id="ui-dimensions">1920x1080</span></p>
+                        </div>
+                    </div>
+
+                    <div id="map-section" style="display: none;">
+                        <h3 class="section-title">📍 GPS Location Found!</h3>
+                        <div class="map-container" id="map-container">
+                            </div>
+                    </div>
+
+                    <h3 class="section-title">📷 Photography Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Camera</h4>
+                            <p id="ui-camera">Unknown</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Aperture</h4>
+                            <p id="ui-aperture">--</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Shutter Speed</h4>
+                            <p id="ui-shutter">--</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>ISO</h4>
+                            <p id="ui-iso">--</p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">📄 All Extracted Metadata</h3>
+                    <div class="data-panel" id="full-data-panel">
+                        <div id="exif-list">
+                            </div>
+                        <div id="no-exif-msg" style="text-align: center; color: var(--text-light); padding: 20px; display: none;">
+                            No deeper EXIF tags found in this image.
+                        </div>
+                    </div>
+
+                    <div class="action-buttons" style="margin-top: 25px;">
+                        <button class="secondary-btn" onclick="location.reload()" style="width: 100%;">+ Inspect New Image</button>
+                    </div>
+                </div>
+
+                <div id="status-box" style="padding: 15px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); width: 100%;">
+                    Ready. Please upload an image to extract its metadata.
+                </div>
+
+            </div>
+        </section>
+
+       <section class="info-content">
+            <h2>What is EXIF Data?</h2>
+            <ul>
+                <li><strong>Digital Footprint:</strong> EXIF (Exchangeable Image File Format) is hidden data stored inside your photos. It tells the story of how, when, and where a picture was taken.</li>
+                <li><strong>Photographer's Best Friend:</strong> See the exact settings (ISO, Aperture, Shutter Speed) used by professionals to capture stunning shots, allowing you to learn from their settings.</li>
+                <li><strong>Location Tracking:</strong> If Location Services were on, your smartphone embeds exact GPS coordinates. Our tool plots this directly onto a Live Google Map!</li>
+                <li><strong>100% Private Tool:</strong> Our EXIF Viewer runs entirely locally in your browser. We do not upload your sensitive photos or location data to any servers.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+            
+            <div class="popular-links" id="popular-features-container">
+                <h3>Most Clicked Features</h3>
+                <ul id="dynamic-popular-links">
+                    <li><a href="#">Remove Background</a></li>
+                    <li><a href="#">Blur Background</a></li>
+                    <li><a href="#">Circle Crop</a></li>
+                    <li><a href="#">Join Multiple Images</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Checkbox element ko target karo
+    const toggleSwitch = document.querySelector('#checkbox');
+    
+    // 2. Page load hote hi check karo ki purani konsi theme save thi
+    const currentTheme = localStorage.getItem('theme');
+    
+    // 3. Agar purani theme save hai, toh usko turant apply kar do
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        
+        // Agar theme 'dark' hai, toh toggle (sun/moon) button ko bhi ON kardo
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+        }
+    }
+
+    // 4. Jab user button dabaye, toh theme change karo aur memory me SAVE bhi karo
+    toggleSwitch.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark'); // Memory me save kiya
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light'); // Memory me save kiya
+        }    
+    });
+
+        // UI Elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropContent = document.getElementById('drop-content');
+        const canvasContainer = document.getElementById('canvas-container');
+        const previewImg = document.getElementById('preview-img');
+        const editingTools = document.getElementById('editing-tools');
+        const statusBox = document.getElementById('status-box');
+        const loadingMsg = document.getElementById('loading-msg');
+        
+        // Data UI Elements
+        const uiFilename = document.getElementById('ui-filename');
+        const uiFilesize = document.getElementById('ui-filesize');
+        const uiDimensions = document.getElementById('ui-dimensions');
+        
+        const uiCamera = document.getElementById('ui-camera');
+        const uiAperture = document.getElementById('ui-aperture');
+        const uiShutter = document.getElementById('ui-shutter');
+        const uiIso = document.getElementById('ui-iso');
+        
+        const mapSection = document.getElementById('map-section');
+        const mapContainer = document.getElementById('map-container');
+        
+        const exifList = document.getElementById('exif-list');
+        const noExifMsg = document.getElementById('no-exif-msg');
+
+        // 1. Upload & Read Image
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                
+                // Set Basic File Info
+                uiFilename.innerText = file.name;
+                uiFilesize.innerText = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                
+                // Show Preview
+                const objectUrl = URL.createObjectURL(file);
+                previewImg.src = objectUrl;
+                
+                previewImg.onload = () => {
+                    uiDimensions.innerText = `${previewImg.naturalWidth} x ${previewImg.naturalHeight} px`;
+                };
+
+                // UI Transitions
+                dropContent.style.display = 'none';
+                statusBox.style.display = 'none';
+                canvasContainer.style.display = 'flex';
+                loadingMsg.style.display = 'block';
+
+                // Extract EXIF Data using exifr
+                try {
+                    // Get full parsed EXIF object
+                    const exifData = await exifr.parse(file);
+                    
+                    // Get GPS separately as exifr provides a clean [lat, lon] array
+                    const gpsData = await exifr.gps(file);
+
+                    populateDashboard(exifData, gpsData);
+
+                } catch (error) {
+                    console.error("EXIF Error:", error);
+                    populateDashboard(null, null); // Show empty state
+                }
+            }
+        });
+
+        // 2. Populate the Dashboard with Data
+        function populateDashboard(exifData, gpsData) {
+            loadingMsg.style.display = 'none';
+            editingTools.style.display = 'block';
+            
+            // Reset fields
+            uiCamera.innerText = 'Unknown';
+            uiAperture.innerText = '--';
+            uiShutter.innerText = '--';
+            uiIso.innerText = '--';
+            mapSection.style.display = 'none';
+            mapContainer.innerHTML = '';
+            exifList.innerHTML = '';
+
+            if (!exifData) {
+                noExifMsg.style.display = 'block';
+                return;
+            } else {
+                noExifMsg.style.display = 'none';
+            }
+
+            // --- Fill Photography Stats ---
+            if (exifData.Make || exifData.Model) {
+                uiCamera.innerText = `${exifData.Make || ''} ${exifData.Model || ''}`.trim();
+            }
+            if (exifData.FNumber) {
+                uiAperture.innerText = `f/${exifData.FNumber}`;
+            }
+            if (exifData.ExposureTime) {
+                // Convert decimal to fraction (e.g., 0.01 -> 1/100)
+                let shutter = exifData.ExposureTime;
+                if (shutter < 1) {
+                    shutter = `1/${Math.round(1 / shutter)}`;
+                }
+                uiShutter.innerText = `${shutter}s`;
+            }
+            if (exifData.ISO) {
+                uiIso.innerText = exifData.ISO;
+            }
+
+            // --- Fill GPS Map ---
+            if (gpsData && gpsData.latitude && gpsData.longitude) {
+                mapSection.style.display = 'block';
+                mapContainer.style.display = 'block';
+                
+                // Embed Google Maps via Iframe (No API key needed!)
+                const lat = gpsData.latitude;
+                const lon = gpsData.longitude;
+                mapContainer.innerHTML = `<iframe 
+                    src="https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed" 
+                    allowfullscreen="" loading="lazy">
+                </iframe>`;
+            }
+
+            // --- Fill Full Data Table ---
+            const keysToIgnore = ['MakerNote', 'UserComment']; // Hide huge binary tags
+            
+            for (let [key, value] of Object.entries(exifData)) {
+                if (keysToIgnore.includes(key)) continue;
+
+                // Format objects/arrays to string
+                if (typeof value === 'object') {
+                    if (value instanceof Date) {
+                        value = value.toLocaleString();
+                    } else if (Array.isArray(value)) {
+                        value = value.join(', ');
+                    } else {
+                        value = JSON.stringify(value);
+                    }
+                }
+
+                // Add Row
+                exifList.innerHTML += `
+                    <div class="metadata-row">
+                        <span class="meta-key">${key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <span class="meta-val">${value}</span>
+                    </div>
+                `;
+            }
+        }
+        // --- DRAG AND DROP LOGIC ---
+const dropZoneElement = document.getElementById('drop-zone');
+
+if (dropZoneElement) {
+    // Jab file zone ke upar aaye
+    dropZoneElement.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Browser ko file open karne se roko
+        dropZoneElement.classList.add('drag-active');
+    });
+
+    // Jab file zone se bahar jaye
+    dropZoneElement.addEventListener('dragleave', () => {
+        dropZoneElement.classList.remove('drag-active');
+    });
+
+    // Jab file drop ki jaye
+    dropZoneElement.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZoneElement.classList.remove('drag-active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            // Dropped file ko input tag mein daal do
+            fileInput.files = e.dataTransfer.files;
+            
+            // File input ka 'change' event manually trigger karo
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
+}
+// ---------------------------
+    </script>
+</body>
+</html>
