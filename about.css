@@ -1,0 +1,258 @@
+/* Container */
+.about-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    overflow-x: hidden;
+}
+
+/* Header / Hero */
+.about-header {
+    padding: 6rem 1rem 4rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mega-title {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    color: var(--text-main);
+    letter-spacing: -2px;
+}
+
+.text-glow {
+    color: var(--primary-color);
+    text-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+}
+
+/* Dark Mode specific glow fix */
+[data-theme="dark"] .text-glow {
+    color: #60a5fa;
+    text-shadow: 0 0 30px rgba(96, 165, 250, 0.6);
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-light);
+    max-width: 600px;
+    text-align: center;
+}
+
+/* Zigzag Split Layout */
+.split-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4rem;
+    padding: 5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.split-layout.reverse {
+    flex-direction: row-reverse;
+}
+
+.split-content {
+    flex: 1;
+}
+
+.section-heading {
+    font-size: 2.5rem;
+    color: var(--text-main);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.split-content p {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
+
+/* Abstract Visual Boxes (Futuristic Element) */
+.split-visual {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.futuristic-box {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+}
+
+.box-blue {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
+}
+
+.box-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.1);
+}
+
+/* Dark mode specific box adjustments */
+[data-theme="dark"] .box-blue { border-color: rgba(96, 165, 250, 0.3); }
+[data-theme="dark"] .box-purple { border-color: rgba(167, 139, 250, 0.3); }
+
+/* Speed Widget Design */
+.speed-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+[data-theme="dark"] .speed-widget { 
+    color: #93c5fd; 
+}
+
+.lightning-icon {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.4));
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.speed-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+}
+
+.speed-sub {
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
+
+/* Lightning Icon Animation */
+@keyframes pulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.4)); }
+    50% { transform: scale(1.1); filter: drop-shadow(0 0 25px rgba(37, 99, 235, 0.8)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.4)); }
+}
+[data-theme="dark"] .code-snippet { color: #93c5fd; }
+
+.shield-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #8b5cf6;
+}
+[data-theme="dark"] .shield-icon { color: #c4b5fd; }
+
+/* Full Width Glass Banner */
+.full-width-glass {
+    margin: 6rem 0;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+[data-theme="dark"] .full-width-glass {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-content h2 {
+    font-size: 2.2rem;
+    color: var(--text-main);
+    margin-bottom: 1rem;
+}
+
+.glass-content p {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* --- Smooth Cinematic Scroll Animations --- */
+.reveal-left { opacity: 0; transform: translateX(-50px); transition: all 0.8s ease-out; }
+.reveal-right { opacity: 0; transform: translateX(50px); transition: all 0.8s ease-out; }
+.reveal-up { opacity: 0; transform: translateY(50px); transition: all 0.8s ease-out; }
+
+.reveal-left.active, 
+.reveal-right.active, 
+.reveal-up.active {
+    opacity: 1;
+    transform: translate(0);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .mega-title { font-size: 2.5rem; }
+    .split-layout, .split-layout.reverse {
+        flex-direction: column;
+        gap: 2rem;
+        padding: 3rem 0;
+        text-align: center;
+    }
+}
+
+/* --- Modern Custom Cursor Styling --- */
+/* Mobile par custom cursor dikhane ka fayda nahi, isliye media query use ki hai */
+@media (min-width: 769px) {
+    body {
+        cursor: none; /* Default cursor ko hide kar diya */
+    }
+
+    .cursor-dot,
+    .cursor-outline {
+    opacity: 0; /* Shuruat mein gayab rahega */
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 9999;
+    /* Opacity ka transition add kiya taaki smoothly dikhayi de */
+    transition: opacity 0.3s ease, transform 0.15s ease-out; 
+    }
+
+    /* Beech wala chhota dot */
+    .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--primary-color);
+    }
+
+    /* Bahar wala bada circle */
+    .cursor-outline {
+        width: 15px;
+        height: 15px;
+        border: 2px solid var(--primary-color);
+        transition: all 0.2s ease-out;
+    }
+
+    /* Jab kisi button ya link par mouse jaye (Hover State) */
+    .cursor-hover .cursor-dot {
+        transform: translate(-50%, -50%) scale(1.5);
+        background-color: var(--hover-color);
+    }
+
+    .cursor-hover .cursor-outline {
+        width: 20px;
+        height: 20px;
+        background-color: rgba(37, 99, 235, 0.1); /* Light blue transparent glow */
+        border-color: var(--hover-color);
+    }
+}

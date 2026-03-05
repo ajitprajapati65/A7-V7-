@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact & Support - A7 V7</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="contact.css">
+</head>
+<body>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown"><a href="#">All Tools ▾</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html" style="color: var(--primary-color); font-weight: bold;">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="contact-main">
+        <div class="contact-header text-center">
+            <h1 class="mega-title">Let's <span class="text-glow">Connect</span></h1>
+            <p class="subtitle">Got a brilliant idea? Found a glitch? Or just want to say hi? Drop it below.</p>
+        </div>
+
+        <div class="contact-container">
+            <div class="contact-info-panel glass-card">
+                <div class="info-content">
+                    <h3>Command Center</h3>
+                    <p class="tech-text">System Status: <span class="status-green">All Tools Operational</span></p>
+                    
+                    <div class="info-block mt-2">
+                        <span class="info-icon">📍</span>
+                        <div>
+                            <h4>Headquarters</h4>
+                            <p>A7 V7 Cyber Hub<br>Lucknow, UP</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-block">
+                        <span class="info-icon">✉️</span>
+                        <div>
+                            <h4>Direct Uplink</h4>
+                            <p>hello@a7v7.com</p>
+                        </div>
+                    </div>
+
+                    <div class="radar-box">
+                        <div class="radar-sweep"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-form-panel glass-card">
+                <form id="a7v7-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+                    
+                    <div class="form-type-selector">
+                        <label class="type-card active" data-type="general">
+                            <input type="radio" name="message_type" value="General" checked>
+                            <span class="type-icon">👋</span>
+                            <span class="type-text">Say Hello</span>
+                        </label>
+                        <label class="type-card" data-type="bug">
+                            <input type="radio" name="message_type" value="Bug Report">
+                            <span class="type-icon">🐛</span>
+                            <span class="type-text">Report Bug</span>
+                        </label>
+                        <label class="type-card" data-type="idea">
+                            <input type="radio" name="message_type" value="Suggestion">
+                            <span class="type-icon">💡</span>
+                            <span class="type-text">Feature Idea</span>
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="text" name="name" id="name" required placeholder=" ">
+                        <label for="name">Your Name</label>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="email" name="email" id="email" required placeholder=" ">
+                        <label for="email">Your Email</label>
+                    </div>
+
+                    <div class="input-group dynamic-field" id="tool-name-group" style="display: none;">
+                        <input type="text" name="tool_name" id="tool_name" placeholder=" ">
+                        <label for="tool_name">Which tool has the bug? (e.g., Image Compressor)</label>
+                    </div>
+
+                    <div class="input-group">
+                        <textarea name="message" id="message" rows="5" required placeholder=" "></textarea>
+                        <label for="message" id="message-label">What's on your mind?</label>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span class="btn-text">Transmit Message</span>
+                        <span class="btn-icon">🚀</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-bottom text-center" style="padding: 2rem; background: #0f172a; color: white;">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle Logic (Same as your site)
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') toggleSwitch.checked = true;
+        }
+        toggleSwitch.addEventListener('change', function(e) {
+            const theme = e.target.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        });
+
+        // Dynamic Form Logic
+        const typeCards = document.querySelectorAll('.type-card');
+        const toolNameGroup = document.getElementById('tool-name-group');
+        const toolNameInput = document.getElementById('tool_name');
+        const messageLabel = document.getElementById('message-label');
+
+        typeCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove active class from all
+                typeCards.forEach(c => c.classList.remove('active'));
+                // Add active class to clicked
+                this.classList.add('active');
+
+                const selectedType = this.getAttribute('data-type');
+
+                // Dynamic UI Changes based on selection
+                if (selectedType === 'bug') {
+                    toolNameGroup.style.display = 'block';
+                    toolNameInput.setAttribute('required', 'true');
+                    messageLabel.innerText = "Describe the issue... (What did you click? What happened?)";
+                    document.documentElement.style.setProperty('--focus-color', '#ef4444'); // Red focus for bugs
+                } else if (selectedType === 'idea') {
+                    toolNameGroup.style.display = 'none';
+                    toolNameInput.removeAttribute('required');
+                    messageLabel.innerText = "Explain your brilliant idea... How will it help users?";
+                    document.documentElement.style.setProperty('--focus-color', '#10b981'); // Green focus for ideas
+                } else {
+                    toolNameGroup.style.display = 'none';
+                    toolNameInput.removeAttribute('required');
+                    messageLabel.innerText = "What's on your mind?";
+                    document.documentElement.style.setProperty('--focus-color', 'var(--primary-color)'); // Default blue
+                }
+            });
+        });
+                //==============================================mouse pointer
+        document.addEventListener("DOMContentLoaded", function() {
+    const dot = document.querySelector(".cursor-dot");
+    const outline = document.querySelector(".cursor-outline");
+
+    window.addEventListener("mousemove", function(e) {
+        const posX = e.clientX;
+        const posY = e.clientY;
+
+        // Pehli baar mouse hilaate hi cursor dikhne lagega (Corner wala glitch khatam)
+        dot.classList.add("cursor-visible");
+        outline.classList.add("cursor-visible");
+
+        // Cursor Movement
+        dot.style.left = `${posX}px`;
+        dot.style.top = `${posY}px`;
+
+        // Outline Animation
+        outline.animate({
+            left: `${posX}px`,
+            top: `${posY}px`
+        }, { duration: 400, fill: "forwards" });
+    });
+
+    // Hover effect for links and buttons
+    const interactiveElements = document.querySelectorAll("button, a, .theme-switch, .search-input, .trending-btn");
+    
+    interactiveElements.forEach(el => {
+        el.addEventListener("mouseenter", () => {
+            document.body.classList.add("cursor-hover");
+        });
+        el.addEventListener("mouseleave", () => {
+            document.body.classList.remove("cursor-hover");
+        });
+    });
+
+    // Page se mouse bahar nikalne par cursor hide kar dena (Optional but Pro look)
+    document.addEventListener("mouseleave", () => {
+        dot.classList.remove("cursor-visible");
+        outline.classList.remove("cursor-visible");
+    });
+});
+    </script>
+</body>
+</html>

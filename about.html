@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - A7 V7</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="about.css">
+</head>
+<body>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">A7 V7</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">All Tools ▾</a>
+                </li>
+                <li><a href="about.html" style="color: var(--primary-color); font-weight: bold;">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </nav>
+    </header>
+
+    <main class="about-container">
+        
+        <section class="about-header text-center">
+            <h1 class="mega-title">Welcome to the <span class="text-glow">Future</span> of Editing</h1>
+            <p class="subtitle">A7 V7 isn't just a tool. It's a high-speed, precision-engineered workspace for modern creators.</p>
+        </section>
+
+        <section class="split-layout">
+            <div class="split-content reveal-left">
+                <h2 class="section-heading">Built on Pure Performance</h2>
+                <p>We believe in keeping things fast and clean. No heavy frameworks, no bloated libraries. A7 V7 is crafted using pure vanilla HTML, CSS, and JavaScript. This means lightning-fast load times and instant tool rendering.</p>
+                <p>When you edit an image, crop a passport photo, or blur a background, the execution is instantaneous. Your time is valuable, and our code respects that.</p>
+            </div>
+            <div class="split-visual reveal-right">
+                <div class="split-visual reveal-right">
+                <div class="futuristic-box box-blue">
+                    <div class="speed-widget">
+                        <span class="lightning-icon">⚡</span>
+                        <span class="speed-text">Lightning Fast</span>
+                        <span class="speed-sub">No lag, instant results</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </section>
+
+        <section class="split-layout reverse">
+            <div class="split-content reveal-right">
+                <h2 class="section-heading">Uncompromising Privacy</h2>
+                <p>Your files belong to you. Many of the tools in the A7 V7 suite process everything right inside your browser.</p>
+                <p>Whether you are editing metadata, resizing an official document signature, or extracting text, we prioritize a secure environment where your sensitive data never leaves your local machine.</p>
+            </div>
+            <div class="split-visual reveal-left">
+                <div class="futuristic-box box-purple">
+                    <div class="shield-icon">🔒 Local Processing</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="full-width-glass reveal-up">
+            <div class="glass-content">
+                <h2>The Year 2030 Standard</h2>
+                <p>We design for tomorrow. From fluid glassmorphism interfaces to intuitive tool placements, every pixel is placed with intention. Experience a workspace that doesn't just function perfectly, but feels incredible to use.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>A7 V7</h2>
+                <p>Your ultimate destination for modern editing tools.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 A7 V7. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. DARK MODE LOGIC (Same as index.html so it works perfectly) ---
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme');
+        
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            if (currentTheme === 'dark') {
+                toggleSwitch.checked = true;
+            }
+        }
+
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }    
+        });
+
+        // --- 2. SCROLL REVEAL ANIMATION (For cinematic effect) ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            const hiddenElements = document.querySelectorAll('.reveal-left, .reveal-right, .reveal-up');
+            hiddenElements.forEach((el) => observer.observe(el));
+        });
+        //=======================================
+        //------ mouse pointer change script-----
+        //========================================
+        document.addEventListener("DOMContentLoaded", function() {
+    const dot = document.querySelector(".cursor-dot");
+    const outline = document.querySelector(".cursor-outline");
+
+    window.addEventListener("mousemove", function(e) {
+        const posX = e.clientX;
+        const posY = e.clientY;
+
+        // Pehli baar mouse hilaate hi cursor dikhne lagega (Corner wala glitch khatam)
+        dot.classList.add("cursor-visible");
+        outline.classList.add("cursor-visible");
+
+        // Cursor Movement
+        dot.style.left = `${posX}px`;
+        dot.style.top = `${posY}px`;
+
+        // Outline Animation
+        outline.animate({
+            left: `${posX}px`,
+            top: `${posY}px`
+        }, { duration: 400, fill: "forwards" });
+    });
+
+    // Hover effect for links and buttons
+    const interactiveElements = document.querySelectorAll("button, a, .theme-switch, .search-input, .trending-btn");
+    
+    interactiveElements.forEach(el => {
+        el.addEventListener("mouseenter", () => {
+            document.body.classList.add("cursor-hover");
+        });
+        el.addEventListener("mouseleave", () => {
+            document.body.classList.remove("cursor-hover");
+        });
+    });
+
+    // Page se mouse bahar nikalne par cursor hide kar dena (Optional but Pro look)
+    document.addEventListener("mouseleave", () => {
+        dot.classList.remove("cursor-visible");
+        outline.classList.remove("cursor-visible");
+    });
+});
+    </script>
+</body>
+</html>

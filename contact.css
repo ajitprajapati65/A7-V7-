@@ -1,0 +1,268 @@
+:root {
+    --focus-color: var(--primary-color); /* Dynamically changes via JS */
+}
+
+.contact-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 80vh;
+}
+
+.contact-header {
+    margin-bottom: 4rem;
+    margin-top: 2rem;
+}
+
+/* 2-Column Grid */
+.contact-container {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+/* Shared Glassmorphism Cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .glass-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* --- Left Panel: Info & Radar --- */
+.info-content h3 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.tech-text {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 2rem;
+}
+
+.status-green { color: #10b981; font-weight: bold; }
+
+.info-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-icon {
+    font-size: 1.5rem;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.8rem;
+    border-radius: 12px;
+}
+
+.info-block h4 { color: var(--text-main); margin-bottom: 0.2rem; }
+.info-block p { color: var(--text-light); font-size: 0.95rem; }
+
+/* Cool CSS Radar Animation */
+.radar-box {
+    margin-top: 3rem;
+    height: 150px;
+    width: 100%;
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.05);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] .radar-box { background: rgba(0,0,0,0.2); }
+
+.radar-sweep {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    position: relative;
+}
+.radar-sweep::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 50px; height: 50px;
+    background: conic-gradient(rgba(37, 99, 235, 0.8), transparent 50%);
+    transform-origin: 0 0;
+    animation: radar 2s linear infinite;
+}
+
+@keyframes radar {
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Right Panel: Form Styles --- */
+.form-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.type-card {
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.type-card input[type="radio"] { display: none; }
+.type-icon { font-size: 1.8rem; }
+.type-text { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+
+/* Hover & Active States */
+.type-card:hover { border-color: var(--focus-color); transform: translateY(-3px); }
+.type-card.active {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--focus-color);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.2);
+}
+[data-theme="dark"] .type-card.active { background: rgba(96, 165, 250, 0.1); }
+
+/* Floating Label Input Fields */
+.input-group {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.input-group input, .input-group textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    padding: 1rem 0.5rem 0.5rem;
+    font-size: 1rem;
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-group label {
+    position: absolute;
+    top: 1rem;
+    left: 0.5rem;
+    color: var(--text-light);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* Magic happens here: Floating Label */
+.input-group input:focus, .input-group textarea:focus,
+.input-group input:not(:placeholder-shown), .input-group textarea:not(:placeholder-shown) {
+    border-bottom-color: var(--focus-color);
+}
+
+.input-group input:focus ~ label, .input-group textarea:focus ~ label,
+.input-group input:not(:placeholder-shown) ~ label, .input-group textarea:not(:placeholder-shown) ~ label {
+    top: -10px;
+    font-size: 0.8rem;
+    color: var(--focus-color);
+    font-weight: bold;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--focus-color), var(--hover-color));
+    color: white;
+    border: none;
+    padding: 1.2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .contact-container { grid-template-columns: 1fr; }
+    .form-type-selector { grid-template-columns: 1fr; }
+}
+
+/* --- Modern Custom Cursor Styling --- */
+/* Mobile par custom cursor dikhane ka fayda nahi, isliye media query use ki hai */
+@media (min-width: 769px) {
+    body {
+        cursor: none; /* Default cursor ko hide kar diya */
+    }
+
+    .cursor-dot,
+    .cursor-outline {
+    opacity: 0; /* Shuruat mein gayab rahega */
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    z-index: 9999;
+    /* Opacity ka transition add kiya taaki smoothly dikhayi de */
+    transition: opacity 0.3s ease, transform 0.15s ease-out; 
+}
+
+    /* Beech wala chhota dot */
+    .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--primary-color);
+    }
+
+    /* Bahar wala bada circle */
+    .cursor-outline {
+        width: 15px;
+        height: 15px;
+        border: 2px solid var(--primary-color);
+        transition: all 0.2s ease-out;
+    }
+
+    /* Jab kisi button ya link par mouse jaye (Hover State) */
+    .cursor-hover .cursor-dot {
+        transform: translate(-50%, -50%) scale(1.5);
+        background-color: var(--hover-color);
+    }
+
+    .cursor-hover .cursor-outline {
+        width: 20px;
+        height: 20px;
+        background-color: rgba(37, 99, 235, 0.1); /* Light blue transparent glow */
+        border-color: var(--hover-color);
+    }
+}
